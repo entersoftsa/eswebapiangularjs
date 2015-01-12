@@ -1,6 +1,6 @@
 {
   "name": "eswebapiangularjs",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "homepage": "http://entersoftsa.github.io/eswebapiangularjs",
   "authors": [
     "Stavros Menegos <sme@entersoft.gr>"
@@ -15,6 +15,7 @@
   ],
   "license": "MIT",
   "ignore": [
+    "**/.*",
     "node_modules",
     "bower_components",
     "test",
