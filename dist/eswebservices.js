@@ -1,6 +1,7 @@
-'use strict';
 
 (function() {
+    'use strict';
+    
     /* Services */
 
     var esWebServices = angular.module('esWebServices', ['ngStorage']);
