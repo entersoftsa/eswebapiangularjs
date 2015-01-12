@@ -1,7 +1,12 @@
 
+/***********************************
+ * Entersoft SA
+ * http://www.entersoft.eu
+ ***********************************/
+ 
 (function() {
     'use strict';
-    
+
     /* Services */
 
     var esWebServices = angular.module('esWebServices', ['ngStorage']);
