@@ -94,6 +94,10 @@
                             $sessionStorage.__esrequest_sesssion = tok;
                         },
 
+                        getUser: function () {
+                            return $sessionStorage.__esrequest_sesssion || false
+                        },
+
                         fetchSimpleScrollerRootTable: function(GroupID, FilterID, Params) {
                             var surl = esConfigSettings.host.concat(ESWEBAPI_URL.__SCROLLERROOTTABLE__, GroupID, "/", FilterID);
 
