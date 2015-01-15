@@ -1,7 +1,7 @@
 /***********************************
  * Entersoft SA
  * http://www.entersoft.eu
- * v0.0.6
+ * v0.0.8
  * 
  ***********************************/
 
@@ -75,7 +75,7 @@
                 $get: ['$http', '$log', '$sessionStorage', 'ESWEBAPI_URL', function($http, $log, $sessionStorage, ESWEBAPI_URL) {
                     return {
 
-                        login: function(credentials) {
+                        openSession: function(credentials) {
                             delete $sessionStorage.__esrequest_sesssion;
 
                             return $http({
@@ -94,7 +94,7 @@
                             $sessionStorage.__esrequest_sesssion = tok;
                         },
 
-                        scrollerRootTable: function(GroupID, FilterID, Params) {
+                        fetchSimpleScrollerRootTable: function(GroupID, FilterID, Params) {
                             var surl = esConfigSettings.host.concat(ESWEBAPI_URL.__SCROLLERROOTTABLE__, GroupID, "/", FilterID);
 
                             return $http({
@@ -107,7 +107,7 @@
                             });
                         },
 
-                        userSites: function(ebsuser) {
+                        fetchUserSites: function(ebsuser) {
                             return $http({
                                 method: 'post',
                                 url: esConfigSettings.host + ESWEBAPI_URL.__USERSITES__,
@@ -119,7 +119,7 @@
                             });
                         },
 
-                        newEntityAction: function(entityType, entityObject, actionID) {
+                        executeNewEntityAction: function(entityType, entityObject, actionID) {
                             var surl = esConfigSettings.host.concat(ESWEBAPI_URL.__ENTITYACTION__, entityType, "/", actionID);
 
                             return $http({
@@ -133,7 +133,7 @@
 
                         },
 
-                        entityActionByCode: function(entityType, entityCode, entityObject, actionID) {
+                        executeEntityActionByCode: function(entityType, entityCode, entityObject, actionID) {
                             var surl = esConfigSettings.host.concat(ESWEBAPI_URL.__ENTITYACTION__, entityType, "/", entityCode, "/", actionID);
 
                             return $http({
@@ -147,7 +147,7 @@
 
                         },
 
-                        entityActionByGID: function(entityType, entityGID, entityObject, actionID) {
+                        executeEntityActionByGID: function(entityType, entityGID, entityObject, actionID) {
                             var surl = esConfigSettings.host.concat(ESWEBAPI_URL.__ENTITYBYGIDACTION__, entityType, "/", entityGID, "/", actionID);
 
                             return $http({
@@ -161,7 +161,7 @@
 
                         },
 
-                        publicQuery: function(GroupID, FilterID, Params) {
+                        fetchPublicQuery: function(GroupID, FilterID, Params) {
                             var surl = esConfigSettings.host.concat(ESWEBAPI_URL.__PUBLICQUERY__, GroupID, "/", FilterID);
 
                             return $http({
