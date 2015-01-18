@@ -1,8 +1,8 @@
 /***********************************
  * Entersoft SA
  * http://www.entersoft.eu
- * v0.0.8
- * 
+ * v0.0.11
+ *
  ***********************************/
 
 (function() {
@@ -20,12 +20,17 @@
         __SCROLLERROOTTABLE__: "api/rpc/SimpleScrollerRootTable/",
         __ENTITYACTION__: "api/Entity/",
         __ENTITYBYGIDACTION__: "api/EntityByGID/",
-        __ELASTICSEARCH__: "api/esearch/"
+        __ELASTICSEARCH__: "api/esearch/",
+        __SERVER_CAPABILITIES__: "api/Login/ServerCapabilities/"
     });
 
 
     function endsWith(str, suffix) {
         return str.indexOf(suffix, str.length - suffix.length) !== -1;
+    }
+
+    function startsWith(str, prefix) {
+        return str.toLowerCase().indexOf(prefix.toLowerCase()) === 0;
     }
 
     function webAPIToken(inStorage) {
@@ -46,8 +51,13 @@
     esWebServices.provider("es.Services.WebApi",
         function() {
 
+            var urlWEBAPI = "";
+            var unSecureWEBAPI = "";
+            var secureWEBAPI = "";
+
             var esConfigSettings = {
                 host: "",
+                allowUnsecureConnection: false,
                 subscriptionId: "",
                 subscriptionPassword: ""
             };
@@ -58,21 +68,40 @@
                 },
 
                 setSettings: function(setting) {
+                    var __SECURE_HTTP_PREFIX__ = "https://";
+                    var __UNSECURE_HTTP_PREFIX__ = "http://";
+
                     esConfigSettings = setting;
-                    if (!esConfigSettings.host || esConfigSettings.host.trim() == "") {
-                        throw "host for Entersoft WEB API Server is not specified";
-                    }
 
                     if (esConfigSettings.host) {
                         esConfigSettings.host = esConfigSettings.host.trim();
 
+                        if (startsWith(esConfigSettings.host, __SECURE_HTTP_PREFIX__)) {
+                            esConfigSettings.host = esConfigSettings.host.slice(__SECURE_HTTP_PREFIX__.length).trim();
+                        } else if (startsWith(esConfigSettings.host, __UNSECURE_HTTP_PREFIX__)) {
+                            esConfigSettings.host = esConfigSettings.host.slice(__UNSECURE_HTTP_PREFIX__.length).trim();
+                        }
+
+                        if (esConfigSettings.host == "") {
+                            throw "host for Entersoft WEB API Server is not specified";
+                        }
+
                         if (!endsWith(esConfigSettings.host, "/")) {
                             esConfigSettings.host += "/";
+                        }
+
+                        unSecureWEBAPI = __UNSECURE_HTTP_PREFIX__ + esConfigSettings.host;;
+                        secureWEBAPI = __SECURE_HTTP_PREFIX__ + esConfigSettings.host;
+
+                        if (esConfigSettings.allowUnsecureConnection) {
+                            urlWEBAPI = unSecureWEBAPI;
+                        } else {
+                            urlWEBAPI = secureWEBAPI;
                         }
                     }
                     return this;
                 },
-                $get: ['$http', '$log', '$sessionStorage', 'ESWEBAPI_URL', function($http, $log, $sessionStorage, ESWEBAPI_URL) {
+                $get: ['$http', '$log', '$sessionStorage', '$q', 'ESWEBAPI_URL', function($http, $log, $sessionStorage, $q, ESWEBAPI_URL) {
                     return {
 
                         openSession: function(credentials) {
@@ -80,7 +109,7 @@
 
                             return $http({
                                 method: 'post',
-                                url: esConfigSettings.host + ESWEBAPI_URL.__LOGIN__,
+                                url: urlWEBAPI + ESWEBAPI_URL.__LOGIN__,
                                 data: {
                                     SubscriptionID: esConfigSettings.subscriptionId,
                                     SubscriptionPassword: esConfigSettings.subscriptionPassword,
@@ -94,12 +123,38 @@
                             $sessionStorage.__esrequest_sesssion = tok;
                         },
 
-                        getUser: function () {
-                            return $sessionStorage.__esrequest_sesssion || false
+                        getUser: function() {
+                            return $sessionStorage.__esrequest_sesssion || false;
+                        },
+
+                        logout: function()
+                        {
+                            delete $sessionStorage.__esrequest_sesssion;
+                        },
+
+                        fetchServerCapabilities: function() {
+
+                            var defered = $q.defer();
+
+                            $http.get(unSecureWEBAPI + ESWEBAPI_URL.__SERVER_CAPABILITIES__)
+                                .success(function(data) {
+                                    defered.resolve(data);
+                                })
+                                .error(function() {
+                                    $http.get(secureWEBAPI + ESWEBAPI_URL.__SERVER_CAPABILITIES__)
+                                        .success(function(data) {
+                                            defered.resolve(data);
+                                        })
+                                        .error(function(dat, stat, header, config) {
+                                            defered.reject([dat, stat, header, config]);
+                                        });
+                                });
+
+                            return defered.promise;
                         },
 
                         fetchSimpleScrollerRootTable: function(GroupID, FilterID, Params) {
-                            var surl = esConfigSettings.host.concat(ESWEBAPI_URL.__SCROLLERROOTTABLE__, GroupID, "/", FilterID);
+                            var surl = urlWEBAPI.concat(ESWEBAPI_URL.__SCROLLERROOTTABLE__, GroupID, "/", FilterID);
 
                             return $http({
                                 method: 'get',
@@ -114,7 +169,7 @@
                         fetchUserSites: function(ebsuser) {
                             return $http({
                                 method: 'post',
-                                url: esConfigSettings.host + ESWEBAPI_URL.__USERSITES__,
+                                url: urlWEBAPI + ESWEBAPI_URL.__USERSITES__,
                                 data: {
                                     SubscriptionID: esConfigSettings.subscriptionId,
                                     SubscriptionPassword: esConfigSettings.subscriptionPassword,
@@ -124,7 +179,7 @@
                         },
 
                         executeNewEntityAction: function(entityType, entityObject, actionID) {
-                            var surl = esConfigSettings.host.concat(ESWEBAPI_URL.__ENTITYACTION__, entityType, "/", actionID);
+                            var surl = urlWEBAPI.concat(ESWEBAPI_URL.__ENTITYACTION__, entityType, "/", actionID);
 
                             return $http({
                                 method: 'post',
@@ -138,7 +193,7 @@
                         },
 
                         executeEntityActionByCode: function(entityType, entityCode, entityObject, actionID) {
-                            var surl = esConfigSettings.host.concat(ESWEBAPI_URL.__ENTITYACTION__, entityType, "/", entityCode, "/", actionID);
+                            var surl = urlWEBAPI.concat(ESWEBAPI_URL.__ENTITYACTION__, entityType, "/", entityCode, "/", actionID);
 
                             return $http({
                                 method: 'post',
@@ -152,7 +207,7 @@
                         },
 
                         executeEntityActionByGID: function(entityType, entityGID, entityObject, actionID) {
-                            var surl = esConfigSettings.host.concat(ESWEBAPI_URL.__ENTITYBYGIDACTION__, entityType, "/", entityGID, "/", actionID);
+                            var surl = urlWEBAPI.concat(ESWEBAPI_URL.__ENTITYBYGIDACTION__, entityType, "/", entityGID, "/", actionID);
 
                             return $http({
                                 method: 'post',
@@ -166,7 +221,7 @@
                         },
 
                         fetchPublicQuery: function(GroupID, FilterID, Params) {
-                            var surl = esConfigSettings.host.concat(ESWEBAPI_URL.__PUBLICQUERY__, GroupID, "/", FilterID);
+                            var surl = urlWEBAPI.concat(ESWEBAPI_URL.__PUBLICQUERY__, GroupID, "/", FilterID);
 
                             return $http({
                                 method: 'get',
@@ -179,7 +234,7 @@
                         },
 
                         eSearch: function(eUrl, eMethod, eBody) {
-                            var surl = esConfigSettings.host.concat(ESWEBAPI_URL.__ELASTICSEARCH__, eUrl);
+                            var surl = urlWEBAPI.concat(ESWEBAPI_URL.__ELASTICSEARCH__, eUrl);
 
                             return $http({
                                 method: eMethod,
