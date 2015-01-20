@@ -21,7 +21,13 @@
         __ENTITYACTION__: "api/Entity/",
         __ENTITYBYGIDACTION__: "api/EntityByGID/",
         __ELASTICSEARCH__: "api/esearch/",
-        __SERVER_CAPABILITIES__: "api/Login/ServerCapabilities/"
+        __SERVER_CAPABILITIES__: "api/Login/ServerCapabilities/",
+        __ESLOG_MESSAGE__: "api/logMessage/"
+
+    });
+
+    esWebServices.value("__WEBAPI_RT__", {
+        url: ""
     });
 
 
@@ -47,7 +53,7 @@
             return '';
         }
     }
-
+ 
     esWebServices.provider("es.Services.WebApi",
         function() {
 
@@ -98,6 +104,9 @@
                         } else {
                             urlWEBAPI = secureWEBAPI;
                         }
+
+                    } else {
+                        throw "host for Entersoft WEB API Server is not specified";
                     }
                     return this;
                 },
@@ -127,9 +136,37 @@
                             return $sessionStorage.__esrequest_sesssion || false;
                         },
 
-                        logout: function()
-                        {
+                        logout: function() {
                             delete $sessionStorage.__esrequest_sesssion;
+                        },
+
+                        esLog: function(inMessageObj) {
+                            if (!inMessageObj) {
+                                return;
+                            }
+
+                            var messageObj = angular.copy(inMessageObj);
+                            
+                            try {
+                                messageObj.__SubscriptionID = esConfigSettings.subscriptionId;
+                                messageObj.__ServerUrl = urlWEBAPI;
+                                messageObj.__EDate = new Date();
+                                $.ajax({
+                                    type: "POST",
+                                    url: urlWEBAPI.concat(ESWEBAPI_URL.__ESLOG_MESSAGE__),
+                                    contentType: "application/json",
+                                    headers: {
+                                        "Authorization": webAPIToken($sessionStorage)
+                                    },
+                                    data: angular.toJson(messageObj)
+                                });
+
+                            } catch (loggingError) {
+
+                                // For Developers - log the log-failure.
+                                $log.warn("Error logging failed");
+                                $log.log(loggingError);
+                            }
                         },
 
                         fetchServerCapabilities: function() {
