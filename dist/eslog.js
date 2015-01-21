@@ -28,11 +28,29 @@
      // the Console. We want to keep that behavior; however, we
      // want to intercept it so that we can also log the errors
      // to the server for later analysis.
-     esWebFramework.provider(
-         "$exceptionHandler", {
-             $get: ['es.Services.logService', function(errorLogService) {
-                 return (errorLogService);
-             }]
+     esWebFramework.provider("$exceptionHandler",
+         function() {
+             var logSettings = {
+                 pushToServer: false,
+                 logLevel: 0
+             };
+             return {
+                 getSettings: function() {
+                     return logSettings;
+                 },
+
+                 setPushToServer: function(pushToServer) {
+                     logSettings.pushToServer = pushToServer;
+                 },
+
+                 setLogLevel: function(logLevel) {
+                     logSettings.logLevel = logLevel;
+                 },
+
+                 $get: ['es.Services.logService', function(errorLogService) {
+                     return (errorLogService);
+                 }]
+             }
          }
      );
 
@@ -45,8 +63,8 @@
      // handling ability of AngularJS. Notice that we pass off to
      // the native "$log" method and then handle our additional
      // server-side logging.
-     esWebFramework.factory("es.Services.logService", ['$log', '$window', 'es.Services.StackTrace',  '$injector', 
-         function($log, $window, stacktraceService, $injector) {
+     esWebFramework.factory("es.Services.logService", ['$log', '$window', 'es.Services.StackTrace', '$injector',
+         function($log, $window, stacktraceService, $injector, $exceptionHandler) {
 
              // I log the given error to the remote server.
              function log(exception, cause) {
@@ -57,38 +75,44 @@
                      // keep running normally for the user).
                      $log.error.apply($log, arguments);
 
-                     // Now, we need to try and log the error the server.
-                     // --
-                     // NOTE: In production, I have some debouncing
-                     // logic here to prevent the same client from
-                     // logging the same error over and over again! All
-                     // that would do is add noise to the log.
-                     try {
-                         var errorMessage = exception.toString();
-                         var stackTrace = stacktraceService.print({
-                             e: exception
-                         });
+                     var exceptionHandler = $injector.get('$exceptionHandler');
+                     if (exceptionHandler) {
+                         var st = exceptionHandler.getSettings();
 
-                        var ESWEBAPI = ESWEBAPI || $injector.get('es.Services.WebApi');
+                         if (st && st.pushToServer) {
+                             // Now, we need to try and log the error the server.
+                             // --
+                             // NOTE: In production, I have some debouncing
+                             // logic here to prevent the same client from
+                             // logging the same error over and over again! All
+                             // that would do is add noise to the log.
+                             try {
+                                 var errorMessage = exception.toString();
+                                 var stackTrace = stacktraceService.print({
+                                     e: exception
+                                 });
 
-                        var itm = {
-                             errorUrl: $window.location.href,
-                             errorMessage: errorMessage,
-                             stackTrace: stackTrace,
-                             cause: (cause || "")
-                         };
+                                 var ESWEBAPI = $injector.get('es.Services.WebApi');
 
-                        ESWEBAPI.esLog(itm);
-                        console.log(angular.toJson(itm));
+                                 var itm = {
+                                     errorUrl: $window.location.href,
+                                     errorMessage: errorMessage,
+                                     stackTrace: stackTrace,
+                                     cause: (cause || "")
+                                 };
 
-                     } catch (loggingError) {
+                                 ESWEBAPI.esLog(itm);
+                                 console.log(angular.toJson(itm));
 
-                         // For Developers - log the log-failure.
-                         $log.warn("Error logging failed");
-                         $log.log(loggingError);
+                             } catch (loggingError) {
 
+                                 // For Developers - log the log-failure.
+                                 $log.warn("Error logging failed");
+                                 $log.log(loggingError);
+
+                             }
+                         }
                      }
-
                  }
                  // Return the logging function.
              return (log);
