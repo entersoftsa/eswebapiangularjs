@@ -136,6 +136,13 @@
                             return $sessionStorage.__esrequest_sesssion || false;
                         },
 
+                        /**
+                         * invalidates a session (useful for logout actions or when session has expired)
+                         */
+                        invalidateUser: function () {
+                            delete $sessionStorage.__esrequest_sesssion;
+                        },
+
                         logout: function() {
                             delete $sessionStorage.__esrequest_sesssion;
                         },
