@@ -77,6 +77,10 @@
                     return urlWEBAPI;
                 },
 
+                getWebApiToken: function(storage) {
+                    return webAPIToken(storage);
+                },
+
                 setSettings: function(setting) {
                     var __SECURE_HTTP_PREFIX__ = "https://";
                     var __UNSECURE_HTTP_PREFIX__ = "http://";
@@ -134,13 +138,14 @@
                             });
                         },
 
-                        getWebApiToken: function() {
-                            return webAPIToken($sessionStorage);
-                        },
-
                         setUser: function(data) {
                             var tok = data.Model;
                             $sessionStorage.__esrequest_sesssion = tok;
+                            try {
+                                $log.updateAjaxToken(webAPIToken($sessionStorage));
+                            } catch (exc) {
+
+                            }
                         },
 
                         getUser: function() {

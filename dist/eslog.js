@@ -22,10 +22,43 @@
      esWebFramework.provider("$log",
          function() {
              var logAppenders = [];
+             var ajaxAppender = null;
+
+             function getLogger() {
+                 return log4javascript.getLogger('esLogger');
+             }
 
              function createDefaultAppenders() {
                  doaddAppender(new log4javascript.BrowserConsoleAppender());
                  doaddAppender(new log4javascript.PopUpAppender());
+             }
+
+             function setAccessToken(token)
+             {
+                if (!ajaxAppender) {
+                    return;
+                }
+
+                var hd = ajaxAppender.getHeaders();
+                if (hd) {
+                    var i;
+                    var foundIndex = -1;
+                    for (i = 0; i < hd.length; i++) {
+                        if (hd[i].name == "Authorization")
+                        {
+                            foundIndex = i;
+                            break;
+                        }
+                    }
+                    if (foundIndex != -1) {
+                        hd.splice(foundIndex, 1);
+                    }
+                }
+
+                if (token && token != "")
+                {
+                    ajaxAppender.addHeader("Authorization", token);
+                }
              }
 
              function doaddAppender(appender) {
@@ -42,26 +75,27 @@
                  addDefaultAppenders: createDefaultAppenders,
 
                  addESWebApiAppender: function(srvUrl) {
-                     var ajaxUrl = srvUrl + "api/rpc/log/";
-                     var appender = new log4javascript.AjaxAppender(ajaxUrl, false);
-                     appender.setSendAllOnUnload(true);
-                     appender.setWaitForResponse(true);
-                     appender.setBatchSize(10);
-                     appender.setTimed(true);
-                     appender.setTimerInterval(30000);
-                     //appender.addHeader("Authorization", esWebApi.getWebApiToken());
-                     appender.addHeader("Content-Type", "application/json");
+                     // var ajaxUrl = srvUrl + "api/rpc/log/";
+                     var ajaxUrl = srvUrl + "api/rpc/registerException/";
 
-                     appender.setFailCallback(function(messg) {
-                        console.error("Failed to POST Logs to the server", messg);
+                     ajaxAppender = new log4javascript.AjaxAppender(ajaxUrl, false);
+                     ajaxAppender.setSendAllOnUnload(true);
+                     ajaxAppender.setWaitForResponse(true);
+                     ajaxAppender.setBatchSize(10);
+                     ajaxAppender.setTimed(true);
+                     ajaxAppender.setTimerInterval(30000);
+                     ajaxAppender.addHeader("Content-Type", "application/json");
+
+                     ajaxAppender.setFailCallback(function(messg) {
+                         console.error("Failed to POST Logs to the server", messg);
                      });
-                     return doaddAppender(appender);
+                     return doaddAppender(ajaxAppender);
                  },
 
-                 $get: ['$injector',
+                 $get: ['$injector', 
                      function($injector) {
                          try {
-                             var logger = log4javascript.getDefaultLogger();
+                             var logger = getLogger();
                              if (logAppenders.length == 0) {
                                  createDefaultAppenders();
                              }
@@ -71,6 +105,9 @@
                                  logger.addAppender(logAppenders[i]);
                              }
                              console.info("ES Logger started");
+
+                             logger.updateAjaxToken = setAccessToken;
+
                              return logger;
                          } catch (exception) {
                              console.log("Error in starting entersoft logger", exception);
