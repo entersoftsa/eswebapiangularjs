@@ -19,6 +19,71 @@
          }
      );
 
+     esWebFramework.provider("$log",
+         function() {
+             var logAppenders = [];
+
+             function createDefaultAppenders() {
+                 doaddAppender(new log4javascript.BrowserConsoleAppender());
+                 doaddAppender(new log4javascript.PopUpAppender());
+             }
+
+             function doaddAppender(appender) {
+                 if (logAppenders.indexOf(appender) == -1) {
+                     logAppenders.push(appender);
+                     return true;
+                 }
+                 return false;
+             }
+
+             return {
+                 addAppender: doaddAppender,
+
+                 addDefaultAppenders: createDefaultAppenders,
+
+                 addESWebApiAppender: function(srvUrl) {
+                     var ajaxUrl = srvUrl + "api/rpc/log/";
+                     var appender = new log4javascript.AjaxAppender(ajaxUrl, false);
+                     appender.setSendAllOnUnload(true);
+                     appender.setWaitForResponse(true);
+                     appender.setBatchSize(10);
+                     appender.setTimed(true);
+                     appender.setTimerInterval(30000);
+                     //appender.addHeader("Authorization", esWebApi.getWebApiToken());
+                     appender.addHeader("Content-Type", "application/json");
+
+                     appender.setFailCallback(function(messg) {
+                        console.error("Failed to POST Logs to the server", messg);
+                     });
+                     return doaddAppender(appender);
+                 },
+
+                 $get: ['$injector',
+                     function($injector) {
+                         try {
+                             var logger = log4javascript.getDefaultLogger();
+                             if (logAppenders.length == 0) {
+                                 createDefaultAppenders();
+                             }
+
+                             var i = 0;
+                             for (i = 0; i < logAppenders.length; i++) {
+                                 logger.addAppender(logAppenders[i]);
+                             }
+                             console.info("ES Logger started");
+                             return logger;
+                         } catch (exception) {
+                             console.log("Error in starting entersoft logger", exception);
+                             return $log;
+                         }
+
+                     }
+                 ]
+             }
+         }
+
+     );
+
 
      // -------------------------------------------------- //
      // -------------------------------------------------- //
@@ -32,7 +97,7 @@
          function() {
              var logSettings = {
                  pushToServer: false,
-                 logLevel: 0
+                 logServer: ""
              };
              return {
                  getSettings: function() {
@@ -43,79 +108,64 @@
                      logSettings.pushToServer = pushToServer;
                  },
 
-                 setLogLevel: function(logLevel) {
-                     logSettings.logLevel = logLevel;
+                 setLogServer: function(logServer) {
+                     logSettings.logServer = logServer;
                  },
 
-                 $get: ['es.Services.logService', function(errorLogService) {
-                     return (errorLogService);
-                 }]
+                 $get: ['$log', '$window', 'es.Services.StackTrace', '$injector',
+                     function($log, $window, stacktraceService, $injector) {
+
+                         // I log the given error to the remote server.
+                         function log(exception, cause) {
+                                 var errorMessage, stackTrace, itm;
+
+                                 try {
+                                     errorMessage = exception.toString();
+                                     stackTrace = stacktraceService.print({
+                                         e: exception
+                                     });
+
+                                     itm = {
+                                         errorUrl: $window.location.href,
+                                         errorMessage: errorMessage,
+                                         stackTrace: stackTrace,
+                                         cause: (cause || "")
+                                     };
+
+                                     $log.error(JSON.stringify(itm, null, '\t'));
+
+                                 } catch (loggingError) {
+                                     console.log(arguments);
+                                 }
+
+                                 if (logSettings.pushToServer) {
+                                     // Now, we need to try and log the error the server.
+                                     // --
+                                     // NOTE: In production, I have some debouncing
+                                     // logic here to prevent the same client from
+                                     // logging the same error over and over again! All
+                                     // that would do is add noise to the log.
+                                     try {
+                                         var ESWEBAPI = $injector.get('es.Services.WebApi');
+
+                                         ESWEBAPI.registerException(itm, logSettings.logServer);
+
+                                     } catch (loggingError) {
+
+                                         // For Developers - log the log-failure.
+                                         $log.warn("ES Error in registerException on store " + logSettings.logServer);
+                                         $log.log(loggingError);
+
+                                     }
+                                 }
+
+                             }
+                             // Return the logging function.
+                         return (log);
+                     }
+                 ]
+
              }
          }
      );
-
-
-     // -------------------------------------------------- //
-     // -------------------------------------------------- //
-
-
-     // The error log service is our wrapper around the core error
-     // handling ability of AngularJS. Notice that we pass off to
-     // the native "$log" method and then handle our additional
-     // server-side logging.
-     esWebFramework.factory("es.Services.logService", ['$log', '$window', 'es.Services.StackTrace', '$injector',
-         function($log, $window, stacktraceService, $injector, $exceptionHandler) {
-
-             // I log the given error to the remote server.
-             function log(exception, cause) {
-
-                     // Pass off the error to the default error handler
-                     // on the AngualrJS logger. This will output the
-                     // error to the console (and let the application
-                     // keep running normally for the user).
-                     $log.error.apply($log, arguments);
-
-                     var exceptionHandler = $injector.get('$exceptionHandler');
-                     if (exceptionHandler) {
-                         var st = exceptionHandler.getSettings();
-
-                         if (st && st.pushToServer) {
-                             // Now, we need to try and log the error the server.
-                             // --
-                             // NOTE: In production, I have some debouncing
-                             // logic here to prevent the same client from
-                             // logging the same error over and over again! All
-                             // that would do is add noise to the log.
-                             try {
-                                 var errorMessage = exception.toString();
-                                 var stackTrace = stacktraceService.print({
-                                     e: exception
-                                 });
-
-                                 var ESWEBAPI = $injector.get('es.Services.WebApi');
-
-                                 var itm = {
-                                     errorUrl: $window.location.href,
-                                     errorMessage: errorMessage,
-                                     stackTrace: stackTrace,
-                                     cause: (cause || "")
-                                 };
-
-                                 ESWEBAPI.esLog(itm);
-                                 console.log(angular.toJson(itm));
-
-                             } catch (loggingError) {
-
-                                 // For Developers - log the log-failure.
-                                 $log.warn("Error logging failed");
-                                 $log.log(loggingError);
-
-                             }
-                         }
-                     }
-                 }
-                 // Return the logging function.
-             return (log);
-         }
-     ]);
  })();

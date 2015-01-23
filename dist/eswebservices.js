@@ -22,7 +22,7 @@
         __ENTITYBYGIDACTION__: "api/EntityByGID/",
         __ELASTICSEARCH__: "api/esearch/",
         __SERVER_CAPABILITIES__: "api/Login/ServerCapabilities/",
-        __ESLOG_MESSAGE__: "api/logMessage/"
+        __REGISTER_EXCEPTION__: "api/rpc/registerException/"
 
     });
 
@@ -53,7 +53,7 @@
             return '';
         }
     }
- 
+
     esWebServices.provider("es.Services.WebApi",
         function() {
 
@@ -71,6 +71,10 @@
             return {
                 getSettings: function() {
                     return esConfigSettings;
+                },
+
+                getServerUrl: function() {
+                    return urlWEBAPI;
                 },
 
                 setSettings: function(setting) {
@@ -110,6 +114,9 @@
                     }
                     return this;
                 },
+
+
+
                 $get: ['$http', '$log', '$sessionStorage', '$q', 'ESWEBAPI_URL', function($http, $log, $sessionStorage, $q, ESWEBAPI_URL) {
                     return {
 
@@ -127,6 +134,10 @@
                             });
                         },
 
+                        getWebApiToken: function() {
+                            return webAPIToken($sessionStorage);
+                        },
+
                         setUser: function(data) {
                             var tok = data.Model;
                             $sessionStorage.__esrequest_sesssion = tok;
@@ -140,25 +151,28 @@
                             delete $sessionStorage.__esrequest_sesssion;
                         },
 
-                        esLog: function(inMessageObj) {
+                        registerException: function(inMessageObj, storeToRegister) {
                             if (!inMessageObj) {
                                 return;
                             }
 
                             var messageObj = angular.copy(inMessageObj);
-                            
+
                             try {
                                 messageObj.__SubscriptionID = esConfigSettings.subscriptionId;
                                 messageObj.__ServerUrl = urlWEBAPI;
                                 messageObj.__EDate = new Date();
                                 $.ajax({
                                     type: "POST",
-                                    url: urlWEBAPI.concat(ESWEBAPI_URL.__ESLOG_MESSAGE__),
+                                    url: urlWEBAPI.concat(ESWEBAPI_URL.__REGISTER_EXCEPTION__),
                                     contentType: "application/json",
                                     headers: {
                                         "Authorization": webAPIToken($sessionStorage)
                                     },
-                                    data: angular.toJson(messageObj)
+                                    data: JSON.stringify({
+                                        exceptionData: messageObj,
+                                        exceptionStore: storeToRegister
+                                    }, null, '\t')
                                 });
 
                             } catch (loggingError) {
