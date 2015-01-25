@@ -77,13 +77,14 @@
                  addESWebApiAppender: function(srvUrl) {
                      // var ajaxUrl = srvUrl + "api/rpc/log/";
                      var ajaxUrl = srvUrl + "api/rpc/registerException/";
-
+                     
                      ajaxAppender = new log4javascript.AjaxAppender(ajaxUrl, false);
                      ajaxAppender.setSendAllOnUnload(true);
+                     ajaxAppender.setLayout( new log4javascript.JsonLayout() );
                      ajaxAppender.setWaitForResponse(true);
-                     ajaxAppender.setBatchSize(10);
+                     ajaxAppender.setBatchSize(100);
                      ajaxAppender.setTimed(true);
-                     ajaxAppender.setTimerInterval(30000);
+                     ajaxAppender.setTimerInterval(60000);
                      ajaxAppender.addHeader("Content-Type", "application/json");
 
                      ajaxAppender.setFailCallback(function(messg) {
@@ -95,6 +96,11 @@
                  $get: ['$injector', 
                      function($injector) {
                          try {
+
+                            var esGlobals = $injector.get('es.Services.Globals');
+
+                            srvUrl = esGlobals.getClientSession().hostUrl;
+
                              var logger = getLogger();
                              if (logAppenders.length == 0) {
                                  createDefaultAppenders();

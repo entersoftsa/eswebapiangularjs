@@ -39,21 +39,6 @@
         return str.toLowerCase().indexOf(prefix.toLowerCase()) === 0;
     }
 
-    function webAPIToken(inStorage) {
-        var session = false;
-
-        //pass token for protected pages
-        if (typeof inStorage.__esrequest_sesssion !== 'undefined' && inStorage.__esrequest_sesssion !== null) {
-            session = inStorage.__esrequest_sesssion;
-        }
-
-        if (session) {
-            return 'Bearer ' + session.WebApiToken;
-        } else {
-            return '';
-        }
-    }
-
     esWebServices.provider("es.Services.WebApi",
         function() {
 
@@ -75,10 +60,6 @@
 
                 getServerUrl: function() {
                     return urlWEBAPI;
-                },
-
-                getWebApiToken: function(storage) {
-                    return webAPIToken(storage);
                 },
 
                 setSettings: function(setting) {
@@ -121,188 +102,184 @@
 
 
 
-                $get: ['$http', '$log', '$sessionStorage', '$q', 'ESWEBAPI_URL', function($http, $log, $sessionStorage, $q, ESWEBAPI_URL) {
-                    return {
+                $get: ['$http', '$log', '$q', '$rootScope', 'ESWEBAPI_URL', 'es.Services.Globals',
+                    function($http, $log, $q, $rootScope, ESWEBAPI_URL, esGlobals) {
 
-                        openSession: function(credentials) {
-                            delete $sessionStorage.__esrequest_sesssion;
+                        return {
 
-                            return $http({
-                                method: 'post',
-                                url: urlWEBAPI + ESWEBAPI_URL.__LOGIN__,
-                                data: {
-                                    SubscriptionID: esConfigSettings.subscriptionId,
-                                    SubscriptionPassword: esConfigSettings.subscriptionPassword,
-                                    Model: credentials
+                            openSession: function(credentials) {
+
+                                return $http({
+                                    method: 'post',
+                                    url: urlWEBAPI + ESWEBAPI_URL.__LOGIN__,
+                                    data: {
+                                        SubscriptionID: esConfigSettings.subscriptionId,
+                                        SubscriptionPassword: esConfigSettings.subscriptionPassword,
+                                        Model: credentials
+                                    }
+                                }).
+                                success(function(data) {
+                                    esGlobals.sessionOpened(data);
+                                }).
+                                error(function(rejection) {
+                                    esGlobals.sessionClosed();
+                                    $log.error(rejection);
+                                });
+                            },
+
+                            logout: function() {
+                                esGlobals.getClientSession().sessionClosed();
+                                $log.log.info("LOGOUT User");
+                            },
+
+                            registerException: function(inMessageObj, storeToRegister) {
+                                if (!inMessageObj) {
+                                    return;
                                 }
-                            });
-                        },
 
-                        setUser: function(data) {
-                            var tok = data.Model;
-                            $sessionStorage.__esrequest_sesssion = tok;
-                            try {
-                                $log.updateAjaxToken(webAPIToken($sessionStorage));
-                            } catch (exc) {
+                                var messageObj = angular.copy(inMessageObj);
 
-                            }
-                        },
+                                try {
+                                    messageObj.__SubscriptionID = esConfigSettings.subscriptionId;
+                                    messageObj.__ServerUrl = urlWEBAPI;
+                                    messageObj.__EDate = new Date();
+                                    $.ajax({
+                                        type: "POST",
+                                        url: urlWEBAPI.concat(ESWEBAPI_URL.__REGISTER_EXCEPTION__),
+                                        contentType: "application/json",
+                                        headers: {
+                                            "Authorization": esGlobals.getWebApiToken()
+                                        },
+                                        data: JSON.stringify({
+                                            exceptionData: messageObj,
+                                            exceptionStore: storeToRegister
+                                        }, null, '\t')
+                                    });
 
-                        getUser: function() {
-                            return $sessionStorage.__esrequest_sesssion || false;
-                        },
+                                } catch (loggingError) {
 
-                        logout: function() {
-                            delete $sessionStorage.__esrequest_sesssion;
-                        },
+                                    // For Developers - log the log-failure.
+                                    $log.warn("Error logging failed");
+                                    $log.log(loggingError);
+                                }
+                            },
 
-                        registerException: function(inMessageObj, storeToRegister) {
-                            if (!inMessageObj) {
-                                return;
-                            }
+                            fetchServerCapabilities: function() {
 
-                            var messageObj = angular.copy(inMessageObj);
+                                var defered = $q.defer();
 
-                            try {
-                                messageObj.__SubscriptionID = esConfigSettings.subscriptionId;
-                                messageObj.__ServerUrl = urlWEBAPI;
-                                messageObj.__EDate = new Date();
-                                $.ajax({
-                                    type: "POST",
-                                    url: urlWEBAPI.concat(ESWEBAPI_URL.__REGISTER_EXCEPTION__),
-                                    contentType: "application/json",
+                                $http.get(unSecureWEBAPI + ESWEBAPI_URL.__SERVER_CAPABILITIES__)
+                                    .success(function(data) {
+                                        defered.resolve(data);
+                                    })
+                                    .error(function() {
+                                        $http.get(secureWEBAPI + ESWEBAPI_URL.__SERVER_CAPABILITIES__)
+                                            .success(function(data) {
+                                                defered.resolve(data);
+                                            })
+                                            .error(function(dat, stat, header, config) {
+                                                defered.reject([dat, stat, header, config]);
+                                            });
+                                    });
+
+                                return defered.promise;
+                            },
+
+                            fetchSimpleScrollerRootTable: function(GroupID, FilterID, Params) {
+                                var surl = urlWEBAPI.concat(ESWEBAPI_URL.__SCROLLERROOTTABLE__, GroupID, "/", FilterID);
+
+                                return $http({
+                                    method: 'get',
                                     headers: {
-                                        "Authorization": webAPIToken($sessionStorage)
+                                        "Authorization": esGlobals.getWebApiToken()
                                     },
-                                    data: JSON.stringify({
-                                        exceptionData: messageObj,
-                                        exceptionStore: storeToRegister
-                                    }, null, '\t')
+                                    url: surl,
+                                    data: Params
+                                });
+                            },
+
+                            fetchUserSites: function(ebsuser) {
+                                return $http({
+                                    method: 'post',
+                                    url: urlWEBAPI + ESWEBAPI_URL.__USERSITES__,
+                                    data: {
+                                        SubscriptionID: esConfigSettings.subscriptionId,
+                                        SubscriptionPassword: esConfigSettings.subscriptionPassword,
+                                        Model: ebsuser
+                                    }
+                                });
+                            },
+
+                            executeNewEntityAction: function(entityType, entityObject, actionID) {
+                                var surl = urlWEBAPI.concat(ESWEBAPI_URL.__ENTITYACTION__, entityType, "/", actionID);
+
+                                return $http({
+                                    method: 'post',
+                                    headers: {
+                                        "Authorization": esGlobals.getWebApiToken()
+                                    },
+                                    url: surl,
+                                    data: entityObject
                                 });
 
-                            } catch (loggingError) {
+                            },
 
-                                // For Developers - log the log-failure.
-                                $log.warn("Error logging failed");
-                                $log.log(loggingError);
+                            executeEntityActionByCode: function(entityType, entityCode, entityObject, actionID) {
+                                var surl = urlWEBAPI.concat(ESWEBAPI_URL.__ENTITYACTION__, entityType, "/", entityCode, "/", actionID);
+
+                                return $http({
+                                    method: 'post',
+                                    headers: {
+                                        "Authorization": esGlobals.getWebApiToken()
+                                    },
+                                    url: surl,
+                                    data: entityObject
+                                });
+
+                            },
+
+                            executeEntityActionByGID: function(entityType, entityGID, entityObject, actionID) {
+                                var surl = urlWEBAPI.concat(ESWEBAPI_URL.__ENTITYBYGIDACTION__, entityType, "/", entityGID, "/", actionID);
+
+                                return $http({
+                                    method: 'post',
+                                    headers: {
+                                        "Authorization": esGlobals.getWebApiToken()
+                                    },
+                                    url: surl,
+                                    data: entityObject
+                                });
+
+                            },
+
+                            fetchPublicQuery: function(GroupID, FilterID, Params) {
+                                var surl = urlWEBAPI.concat(ESWEBAPI_URL.__PUBLICQUERY__, GroupID, "/", FilterID);
+
+                                return $http({
+                                    method: 'get',
+                                    headers: {
+                                        "Authorization": esGlobals.getWebApiToken()
+                                    },
+                                    url: surl,
+                                    data: Params
+                                });
+                            },
+
+                            eSearch: function(eUrl, eMethod, eBody) {
+                                var surl = urlWEBAPI.concat(ESWEBAPI_URL.__ELASTICSEARCH__, eUrl);
+
+                                return $http({
+                                    method: eMethod,
+                                    headers: {
+                                        "Authorization": esGlobals.getWebApiToken()
+                                    },
+                                    url: surl,
+                                    data: eBody
+                                });
                             }
-                        },
-
-                        fetchServerCapabilities: function() {
-
-                            var defered = $q.defer();
-
-                            $http.get(unSecureWEBAPI + ESWEBAPI_URL.__SERVER_CAPABILITIES__)
-                                .success(function(data) {
-                                    defered.resolve(data);
-                                })
-                                .error(function() {
-                                    $http.get(secureWEBAPI + ESWEBAPI_URL.__SERVER_CAPABILITIES__)
-                                        .success(function(data) {
-                                            defered.resolve(data);
-                                        })
-                                        .error(function(dat, stat, header, config) {
-                                            defered.reject([dat, stat, header, config]);
-                                        });
-                                });
-
-                            return defered.promise;
-                        },
-
-                        fetchSimpleScrollerRootTable: function(GroupID, FilterID, Params) {
-                            var surl = urlWEBAPI.concat(ESWEBAPI_URL.__SCROLLERROOTTABLE__, GroupID, "/", FilterID);
-
-                            return $http({
-                                method: 'get',
-                                headers: {
-                                    "Authorization": webAPIToken($sessionStorage)
-                                },
-                                url: surl,
-                                data: Params
-                            });
-                        },
-
-                        fetchUserSites: function(ebsuser) {
-                            return $http({
-                                method: 'post',
-                                url: urlWEBAPI + ESWEBAPI_URL.__USERSITES__,
-                                data: {
-                                    SubscriptionID: esConfigSettings.subscriptionId,
-                                    SubscriptionPassword: esConfigSettings.subscriptionPassword,
-                                    Model: ebsuser
-                                }
-                            });
-                        },
-
-                        executeNewEntityAction: function(entityType, entityObject, actionID) {
-                            var surl = urlWEBAPI.concat(ESWEBAPI_URL.__ENTITYACTION__, entityType, "/", actionID);
-
-                            return $http({
-                                method: 'post',
-                                headers: {
-                                    "Authorization": webAPIToken($sessionStorage)
-                                },
-                                url: surl,
-                                data: entityObject
-                            });
-
-                        },
-
-                        executeEntityActionByCode: function(entityType, entityCode, entityObject, actionID) {
-                            var surl = urlWEBAPI.concat(ESWEBAPI_URL.__ENTITYACTION__, entityType, "/", entityCode, "/", actionID);
-
-                            return $http({
-                                method: 'post',
-                                headers: {
-                                    "Authorization": webAPIToken($sessionStorage)
-                                },
-                                url: surl,
-                                data: entityObject
-                            });
-
-                        },
-
-                        executeEntityActionByGID: function(entityType, entityGID, entityObject, actionID) {
-                            var surl = urlWEBAPI.concat(ESWEBAPI_URL.__ENTITYBYGIDACTION__, entityType, "/", entityGID, "/", actionID);
-
-                            return $http({
-                                method: 'post',
-                                headers: {
-                                    "Authorization": webAPIToken($sessionStorage)
-                                },
-                                url: surl,
-                                data: entityObject
-                            });
-
-                        },
-
-                        fetchPublicQuery: function(GroupID, FilterID, Params) {
-                            var surl = urlWEBAPI.concat(ESWEBAPI_URL.__PUBLICQUERY__, GroupID, "/", FilterID);
-
-                            return $http({
-                                method: 'get',
-                                headers: {
-                                    "Authorization": webAPIToken($sessionStorage)
-                                },
-                                url: surl,
-                                data: Params
-                            });
-                        },
-
-                        eSearch: function(eUrl, eMethod, eBody) {
-                            var surl = urlWEBAPI.concat(ESWEBAPI_URL.__ELASTICSEARCH__, eUrl);
-
-                            return $http({
-                                method: eMethod,
-                                headers: {
-                                    "Authorization": webAPIToken($sessionStorage)
-                                },
-                                url: surl,
-                                data: eBody
-                            });
                         }
                     }
-                }]
+                ]
             }
         }
     );
