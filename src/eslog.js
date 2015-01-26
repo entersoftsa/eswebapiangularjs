@@ -97,10 +97,6 @@
                      function($injector) {
                          try {
 
-                            var esGlobals = $injector.get('es.Services.Globals');
-
-                            srvUrl = esGlobals.getClientSession().hostUrl;
-
                              var logger = getLogger();
                              if (logAppenders.length == 0) {
                                  createDefaultAppenders();
@@ -112,7 +108,20 @@
                              }
                              console.info("ES Logger started");
 
+                            // Extend the current logger object with ajaxAppender attributes
                              logger.updateAjaxToken = setAccessToken;
+                             logger.sendAll = function()
+                             {
+                                try
+                                {
+                                    if (ajaxAppender) {
+                                        ajaxAppender.sendAll();
+                                    }
+                                }
+                                catch(exc) {
+
+                                }
+                             }
 
                              return logger;
                          } catch (exception) {
