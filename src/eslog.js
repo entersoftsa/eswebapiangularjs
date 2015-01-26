@@ -102,8 +102,8 @@
                      return doaddAppender(ajaxAppender);
                  },
 
-                 $get: ['$injector', 
-                     function($injector) {
+                 $get: ['es.Services.Messaging', 
+                     function(esMessaging) {
                          try {
 
                              var logger = getLogger();
@@ -117,8 +117,10 @@
                              }
                              console.info("ES Logger started");
 
-                            // Extend the current logger object with ajaxAppender attributes
-                             logger.updateAjaxToken = setAccessToken;
+                            esMessaging.subscribe("AUTH_CHANGED", function(model, tok){
+                                setAccessToken(tok);
+                             });
+
                              logger.sendAll = function()
                              {
                                 try
