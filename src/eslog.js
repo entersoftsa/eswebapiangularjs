@@ -28,9 +28,13 @@
                  return log4javascript.getLogger('esLogger');
              }
 
-             function createDefaultAppenders() {
+             function createDefaultAppenders(doNotAddPopup) {
                  doaddAppender(new log4javascript.BrowserConsoleAppender());
-                 doaddAppender(new log4javascript.PopUpAppender());
+
+                 var addpopup = angular.isDefined(doNotAddPopup) && !doNotAddPopup;
+                 if (addpopup) {
+                    doaddAppender(new log4javascript.PopUpAppender());
+                 }
              }
 
              function setAccessToken(token)
@@ -99,7 +103,7 @@
 
                              var logger = getLogger();
                              if (logAppenders.length == 0) {
-                                 createDefaultAppenders();
+                                 createDefaultAppenders(true);
                              }
 
                              var i = 0;
