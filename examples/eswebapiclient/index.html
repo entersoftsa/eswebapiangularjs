@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en" ng-app="eskbApp">
+
+<head>
+    <meta charset="utf-8">
+    <title>Entersoft SME Samples</title>
+    <link rel="stylesheet" href="bower_components/bootstrap/dist/css/bootstrap.css">
+    <link rel="stylesheet" href="css/app.css">
+    <link rel="stylesheet" href="css/animations.css">
+    <!-- Custom styles for this template -->
+
+
+    <link href="telerik/styles/kendo.common.min.css" rel="stylesheet">
+    <link href="telerik/styles/kendo.rtl.min.css" rel="stylesheet">
+    <link href="telerik/styles/kendo.default.min.css" rel="stylesheet">
+    <link href="telerik/styles/kendo.dataviz.min.css" rel="stylesheet">
+    <link href="telerik/styles/kendo.dataviz.default.min.css" rel="stylesheet">
+
+</head>
+
+<body ng-controller="mainCtrl">
+    <div class='container'>
+        <a class="brand" href="#/"><img src="http://www.entersoft.gr/User_Scenario/Images/logo.png" />
+        </a>
+        <ul class="nav nav-pills">
+            <li role="presentation"><a href="#/">Login</a>
+            </li>
+            <li role="presentation"><a href="#/scroller">Scroller</a>
+            </li>
+            <div class="btn-group" role="group" aria-label="...">
+                <button type="button" class="btn btn-default">User: {{currentUser.Name}}</button>
+                <button type="button" class="btn btn-default" ng-click="logout()">Logout</button>
+            </div>
+        </ul>
+        <ul/>
+
+    </div>
+
+    <div class="view-container">
+        <div ng-view class="view-frame"></div>
+    </div>
+
+    <script src="bower_components/jquery/dist/jquery.min.js"></script>
+    <script src="bower_components/angular/angular.js"></script>
+    <script src="bower_components/angular-sanitize/angular-sanitize.js"></script>
+    <script src="bower_components/angular-route/angular-route.js"></script>
+    <script src="bower_components/ngStorage/ngstorage.min.js"></script>
+    <script src="bower_components/noty/js/noty/packaged/jquery.noty.packaged.min.js"></script>
+    <script src="bower_components/stacktrace-js/dist/stacktrace.js"></script>
+    <script src="bower_components/log4javascript/js/log4javascript.js"></script>
+
+
+    <script src="../../src/eswebcore.js"></script>
+    <script src="../../src/eswebservices.js"></script> 
+    <script src="../../src/eslog.js"></script>
+    <script src="../../src/esinit.js"></script>
+ 
+
+ <!-- 
+    <script src="../../dist/esframework.min.js"></script>
+ -->
+
+    <script src="telerik/js/kendo.all.min.js"></script>
+
+    <script src="js/app.js"></script>
+    <script src="js/animations.js"></script>
+    <script src="js/controllers.js"></script>
+</body>
+
+</html>

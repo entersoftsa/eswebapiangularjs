@@ -1,0 +1,23 @@
+<div class='container'>
+    <form class="form-signin">
+        <h2 class="form-signin-heading">Public Query</h2>
+        
+        <input type="text"  ng-model="GroupID" class="form-control" placeholder="Entersoft Public Query Group ID" required autofocus>
+      
+        <input type="text" ng-model="FilterID" class="form-control" placeholder="Entersoft Public Query Filter ID" required>
+    
+
+        <button class="btn btn-lg btn-primary btn-block" type="submit" ng-click="executePQ()">Run</button>
+    </form>
+
+    <div ng-repeat="(td, tr) in PQResults">
+        <h2>
+        Table {{td}} has {{tr.length}} rows
+        </h2>
+        
+        <kendo-grid k-data-source="{{tr}}" k-pageable="true" k-sortable="true" k-columns="getColumnDefinitions({{tr}})">
+        </kendo-grid>
+        
+    </div>
+    
+</div>

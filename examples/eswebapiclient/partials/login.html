@@ -1,0 +1,16 @@
+
+<div class="container">
+
+    <form class="form-signin">
+        <h2 class="form-signin-heading">Please sign in</h2>
+        <label for="userID" class="sr-only">Entersoft Application UserID</label>
+        <input type="text" id="userID" ng-model="credentials.UserID" class="form-control" placeholder="Entersoft UserID" required autofocus>
+        <label for="inputPassword" class="sr-only">Entersoft Application User's Password</label>
+        <input type="password" id="inputPassword" ng-model="credentials.Password" class="form-control" placeholder="Password" required>
+        <input type="text" ng-model="credentials.BranchID" class="form-control" placeholder="Entersoft BranchID">
+        <input type="text" ng-model="credentials.LangID" class="form-control" placeholder="LanguageID">
+
+        <button class="btn btn-lg btn-primary btn-block" type="submit" ng-click="doLogin()">Sign in</button>
+    </form>
+
+</div>
