@@ -28,11 +28,11 @@
                  return log4javascript.getLogger('esLogger');
              }
 
-             function createDefaultAppenders(doNotAddPopup) {
+             function createDefaultAppenders(addPopup) {
                  doaddAppender(new log4javascript.BrowserConsoleAppender());
 
-                 var addpopup = angular.isDefined(doNotAddPopup) && !doNotAddPopup;
-                 if (addpopup) {
+                 var x = angular.isDefined(addPopup) && addPopup;
+                 if (x) {
                     doaddAppender(new log4javascript.PopUpAppender());
                  }
              }
@@ -90,6 +90,11 @@
                      ajaxAppender.setTimed(true);
                      ajaxAppender.setTimerInterval(60000);
                      ajaxAppender.addHeader("Content-Type", "application/json");
+
+                     ajaxAppender.setRequestSuccessCallback(function(xmlHttp)
+                     {
+                        console.log("ES Logger, BATCH of logs upoloaded", xmlHttp.responseURL, xmlHttp.status);
+                     });
 
                      ajaxAppender.setFailCallback(function(messg) {
                          console.error("Failed to POST Logs to the server", messg);
