@@ -206,7 +206,7 @@
 
                                          // For Developers - log the log-failure.
                                          $log.warn("ES Error in registerException on store " + logSettings.logServer);
-                                         $log.log(loggingError);
+                                         $log.error(loggingError);
 
                                      }
                                  }

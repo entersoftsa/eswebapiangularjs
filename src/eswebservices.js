@@ -133,7 +133,7 @@
 
                             logout: function() {
                                 esGlobals.sessionClosed();
-                                $log.log.info("LOGOUT User");
+                                $log.info("LOGOUT User");
                             },
 
                             registerException: function(inMessageObj, storeToRegister) {
@@ -164,7 +164,7 @@
 
                                     // For Developers - log the log-failure.
                                     $log.warn("Error logging failed");
-                                    $log.log(loggingError);
+                                    $log.error(loggingError);
                                 }
                             },
 

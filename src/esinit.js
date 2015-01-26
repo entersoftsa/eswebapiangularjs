@@ -77,7 +77,7 @@
                         $log.info("LOGIN User ", data.Model.Name);
 
                     } catch (exc) {
-                        $log.log.error(exc);
+                        $log.error(exc);
                         throw exc;
                     }
                 }
