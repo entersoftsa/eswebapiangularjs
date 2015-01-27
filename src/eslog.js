@@ -109,7 +109,7 @@
 
                              var logger = getLogger();
                              if (logAppenders.length == 0) {
-                                 createDefaultAppenders(true);
+                                 createDefaultAppenders();
                              }
 
                              var i = 0;
