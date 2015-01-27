@@ -4,6 +4,7 @@
  // not how AngularJS rolls; as such, we want to wrap the
  // stacktrace feature in a proper AngularJS service that
  // formally exposes the print method.
+ // version 0.0.24
 
  (function() {
      'use strict';
