@@ -24,6 +24,9 @@
          function() {
              var logAppenders = [];
              var ajaxAppender = null;
+             var logger = null;
+             var level = log4javascript.Level.ALL;
+             var lt = null;
 
              function getLogger() {
                  return log4javascript.getLogger('esLogger');
@@ -34,36 +37,41 @@
 
                  var x = angular.isDefined(addPopup) && addPopup;
                  if (x) {
-                    doaddAppender(new log4javascript.PopUpAppender());
+                     doaddAppender(new log4javascript.PopUpAppender());
                  }
              }
 
-             function setAccessToken(token)
-             {
-                if (!ajaxAppender) {
-                    return;
-                }
+             function setAccessToken(session, token) {
+                 if (!ajaxAppender) {
+                     return;
+                 }
 
-                var hd = ajaxAppender.getHeaders();
-                if (hd) {
-                    var i;
-                    var foundIndex = -1;
-                    for (i = 0; i < hd.length; i++) {
-                        if (hd[i].name == "Authorization")
-                        {
-                            foundIndex = i;
-                            break;
-                        }
-                    }
-                    if (foundIndex != -1) {
-                        hd.splice(foundIndex, 1);
-                    }
-                }
+                 if (lt && session) {
+                     lt.setCustomField("userId", session.connectionModel.UserID);
+                     if (session.credentials) {
+                         lt.setCustomField("branchId", session.credentials.BranchID);
+                         lt.setCustomField("langId", session.credentials.LangID);
+                     }
+                 }
 
-                if (token && token != "")
-                {
-                    ajaxAppender.addHeader("Authorization", token);
-                }
+                 var hd = ajaxAppender.getHeaders();
+                 if (hd) {
+                     var i;
+                     var foundIndex = -1;
+                     for (i = 0; i < hd.length; i++) {
+                         if (hd[i].name == "Authorization") {
+                             foundIndex = i;
+                             break;
+                         }
+                     }
+                     if (foundIndex != -1) {
+                         hd.splice(foundIndex, 1);
+                     }
+                 }
+
+                 if (token && token != "") {
+                     ajaxAppender.addHeader("Authorization", token);
+                 }
              }
 
              function doaddAppender(appender) {
@@ -75,26 +83,49 @@
              }
 
              return {
+
+                 setLevel: function(lvl) {
+                     level = lvl;
+                     if (logger) {
+                         logger.setLevel(level);
+                     }
+                 },
+
+                 getLevel: function() {
+                     return level;
+                 },
+
+                 getCurrentLevel: function() {
+                     if (logger) {
+                         return logger.getEffectiveLevel();
+                     } else {
+                         return log4javascript.Level.OFF;
+                     }
+                 },
+
                  addAppender: doaddAppender,
 
                  addDefaultAppenders: createDefaultAppenders,
 
-                 addESWebApiAppender: function(srvUrl) {
+                 addESWebApiAppender: function(srvUrl, subscriptionId) {
                      // var ajaxUrl = srvUrl + "api/rpc/log/";
                      var ajaxUrl = srvUrl + "api/rpc/registerException/";
-                     
+
                      ajaxAppender = new log4javascript.AjaxAppender(ajaxUrl, false);
                      ajaxAppender.setSendAllOnUnload(true);
-                     ajaxAppender.setLayout( new log4javascript.JsonLayout() );
+
+                     lt = new log4javascript.JsonLayout();
+                     lt.setCustomField("subscriptionId", subscriptionId);
+
+                     ajaxAppender.setLayout(lt);
                      ajaxAppender.setWaitForResponse(true);
                      ajaxAppender.setBatchSize(100);
                      ajaxAppender.setTimed(true);
                      ajaxAppender.setTimerInterval(60000);
                      ajaxAppender.addHeader("Content-Type", "application/json");
 
-                     ajaxAppender.setRequestSuccessCallback(function(xmlHttp)
-                     {
-                        console.log("ES Logger, BATCH of logs upoloaded", xmlHttp.responseURL, xmlHttp.status);
+                     ajaxAppender.setRequestSuccessCallback(function(xmlHttp) {
+                         console.log("ES Logger, BATCH of logs upoloaded", xmlHttp.responseURL, xmlHttp.status);
                      });
 
                      ajaxAppender.setFailCallback(function(messg) {
@@ -103,11 +134,13 @@
                      return doaddAppender(ajaxAppender);
                  },
 
-                 $get: ['es.Services.Messaging', 
+                 $get: ['es.Services.Messaging',
                      function(esMessaging) {
                          try {
 
-                             var logger = getLogger();
+                             logger = getLogger();
+                             logger.setLevel(level);
+
                              if (logAppenders.length == 0) {
                                  createDefaultAppenders();
                              }
@@ -116,25 +149,22 @@
                              for (i = 0; i < logAppenders.length; i++) {
                                  logger.addAppender(logAppenders[i]);
                              }
-                             console.info("ES Logger started");
 
-                            esMessaging.subscribe("AUTH_CHANGED", function(model, tok){
-                                setAccessToken(tok);
+                             esMessaging.subscribe("AUTH_CHANGED", function(session, tok) {
+                                 setAccessToken(session, tok)
                              });
 
-                             logger.sendAll = function()
-                             {
-                                try
-                                {
-                                    if (ajaxAppender) {
-                                        ajaxAppender.sendAll();
-                                    }
-                                }
-                                catch(exc) {
+                             logger.sendAll = function() {
+                                 try {
+                                     if (ajaxAppender) {
+                                         ajaxAppender.sendAll();
+                                     }
+                                 } catch (exc) {
 
-                                }
+                                 }
                              }
 
+                             console.info("ES Logger started");
                              return logger;
                          } catch (exception) {
                              console.log("Error in starting entersoft logger", exception);
@@ -230,6 +260,50 @@
                  ]
 
              }
+         }
+     );
+ })();
+
+ (function() {
+     'use strict';
+
+     var esModule = angular.module('es.Services.Web');
+     esModule.provider(
+         "es.Services.GA",
+         function() {
+
+             var gaKey = "";
+             return {
+                 create: function($window, key, domain) {
+                     gaKey = key;
+                     try {
+                         if (angular.isUndefined($window.ga)) {
+                             console.error("Google Analytics is not loaded!!!");
+                             return;
+                         }
+                         if (!gaKey || gaKey == "") {
+                             console.error("Google Analytics UAT Key is not defined !!!");
+                             return;
+                         }
+
+                         ga('create', gaKey, domain);
+                     } catch (exc) {
+                         console.error(exc);
+                     }
+                 },
+
+                 getGAKey: function() {
+                     return gaKey;
+                 },
+
+                 $get: ['$log', '$window',
+                     function($log, $window) {
+                         return $window.ga;
+                     }
+                 ]
+
+             };
+
          }
      );
  })();

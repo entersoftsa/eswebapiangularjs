@@ -123,7 +123,7 @@
                                     }
                                 }).
                                 success(function(data) {
-                                    esGlobals.sessionOpened(data);
+                                    esGlobals.sessionOpened(data, credentials);
                                 }).
                                 error(function(rejection) {
                                     esGlobals.sessionClosed();

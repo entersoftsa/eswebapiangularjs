@@ -13,8 +13,14 @@
         'eskbControllers'
     ]);
 
-    eskbApp.config(['$logProvider', '$httpProvider', '$routeProvider', 'es.Services.WebApiProvider', '$exceptionHandlerProvider', 
-        function($logProvider, $httpProvider, $routeProvider, esWebApiServiceProvider, $exceptionHandlerProvider) {
+    eskbApp.config(['$logProvider', 
+        '$httpProvider', 
+        '$routeProvider', 
+        'es.Services.WebApiProvider', 
+        '$exceptionHandlerProvider', 
+        'es.Services.GAProvider', 
+        '$windowProvider',
+        function($logProvider, $httpProvider, $routeProvider, esWebApiServiceProvider, $exceptionHandlerProvider, esGAProvider, $windowProvider) {
 
             var interceptor = ['$q', '$sessionStorage', '$timeout', '$location', function($q, $sessionStorage, $timeout, $location) {
                 var httpHandlers = {
@@ -45,20 +51,22 @@
             }];
             $httpProvider.interceptors.push(interceptor);
 
+            esGAProvider.create($windowProvider.$get(), "UA-50505865-9", {'cookieDomain': 'none'});
 
             $logProvider.addDefaultAppenders();
 
             $exceptionHandlerProvider.setPushToServer(true);
             $exceptionHandlerProvider.setLogServer("Azure");
 
+            var subscriptionId = "";
             esWebApiServiceProvider.setSettings({
                 host: "eswebapialp.azurewebsites.net",
-                subscriptionId: "",
+                subscriptionId: subscriptionId,
                 subscriptionPassword: "passx",
                 allowUnsecureConnection: false
             });
 
-            $logProvider.addESWebApiAppender(esWebApiServiceProvider.getServerUrl());
+            $logProvider.addESWebApiAppender(esWebApiServiceProvider.getServerUrl(), subscriptionId);
 
             $routeProvider.
             when('/', {

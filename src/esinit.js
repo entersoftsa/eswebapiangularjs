@@ -60,8 +60,8 @@
     });
 
 
-    esWebFramework.factory('es.Services.Globals', ['$sessionStorage', '$log', 'es.Services.Messaging',
-        function($sessionStorage, $log, esMessaging) {
+    esWebFramework.factory('es.Services.Globals', ['$sessionStorage', '$log', 'es.Services.Messaging', 'es.Services.GA',
+        function($sessionStorage, $log, esMessaging, esGA) {
 
             function fgetModel() {
                 if (!esClientSession.connectionModel) {
@@ -74,7 +74,7 @@
                         session = inStorage.__esrequest_sesssion;
                         esClientSession.connectionModel = session;
 
-                        esMessaging.publish("AUTH_CHANGED", session, getAuthToken(session));
+                        esMessaging.publish("AUTH_CHANGED", esClientSession, getAuthToken(session));
                         $log.info("RELOGIN User ", esClientSession.connectionModel.Name);
                     } else {
                         esMessaging.publish("AUTH_CHANGED", null, getAuthToken(null));
@@ -93,7 +93,7 @@
                     $sessionStorage.__esrequest_sesssion = model;
                 }
 
-                esMessaging.publish("AUTH_CHANGED", model, getAuthToken(model));
+                esMessaging.publish("AUTH_CHANGED", esClientSession, getAuthToken(model));
             }
 
             function getAuthToken(model) {
@@ -106,6 +106,7 @@
             // Private variables//
             var esClientSession = {
                 hostUrl: "",
+                credentials: null,
                 connectionModel: null,
 
                 getWebApiToken: function() {
@@ -116,6 +117,7 @@
 
                 getModel: fgetModel
             };
+
 
 
             return {
@@ -132,9 +134,15 @@
                     esClientSession.setModel(null);
                 },
 
-                sessionOpened: function(data) {
+                sessionOpened: function(data, credentials) {
                     try {
                         esClientSession.setModel(data.Model);
+                        esClientSession.credentials = credentials;
+
+                        var i = 0;
+                        for (i = 0; i < 12; i++) {
+                            esGA('send', 'event', 'AUTH', 'LOGIN', data.Model.GID);
+                        }
 
                         $log.info("LOGIN User ", data.Model.Name);
 
