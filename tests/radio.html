@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <script src="../bower_components/angular/angular.js"></script>
+        <script src="../src/eswebradio.js"></script>
+    </head>
+
+    <body ng-app="RadioTestRunner">
+
+        <div class="container" ng-controller="radioController">
+            <h1>Angular Radio Tests</h1>
+
+            <button ng-click="applyFilter()">Apply Filter</button>
+
+            <div receiver></div>
+        </div>
+
+        <script>
+        //Start radio tests
+        angular.module('RadioTestRunner', ['es.Services.Web.Radio']).
+        config(['RadioProvider', function (RadioProvider) {
+            RadioProvider.setRadioMethods('subscribe', 'publish');
+        }]).
+        controller('radioController', ['Radio', '$scope', '$rootScope', function (radio, $scope, $rootScope) {
+            radio.setupEvent('facet', 'applyFilter');
+            $scope.applyFilter = function () {
+                radio.facet.publish.applyFilter('year');    
+            };
+        }]).
+        directive('receiver', ['Radio', function (radio) {
+            return {
+                restrict: 'A',
+                template: '<div>{{ filter }}</div>',
+                scope: {},
+                controller: ['$scope', '$element', '$attrs', '$transclude', function ($scope, $element, $attrs, $transclude) {
+                    radio.facet.subscribe.applyFilter($scope, function (filter) {
+                        $scope.filter = filter;
+                    });
+                    console.log(radio.listSubscriberMethods('facet'));
+                }]
+            };
+        }]);
+        
+        </script>
+    </body>
+</html>
