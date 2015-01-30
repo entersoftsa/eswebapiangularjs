@@ -7,7 +7,7 @@
         <input type="text" ng-model="FilterID" class="form-control" placeholder="Entersoft Public Query Filter ID" required>
     
 
-        <button class="btn btn-lg btn-primary btn-block" type="submit" ng-click="executePQ()">Run</button>
+        <button es-analytics-on="click" es-analytics-event="Button 1" es-analytics-category="Commands"  class="btn btn-lg btn-primary btn-block" type="submit" ng-click="executePQ()">Run</button>
     </form>
 
     <div ng-repeat="(td, tr) in PQResults">

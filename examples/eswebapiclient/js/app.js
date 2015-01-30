@@ -5,10 +5,10 @@
         'ngRoute',
         'ngStorage',
 
+        'es.Services.Analytics',
+
         /* Entersoft AngularJS WEB API Provider */
         'es.Services.Web',
-
-        /* Application Modules */
 
         'eskbControllers'
     ]);
@@ -18,8 +18,8 @@
         '$routeProvider', 
         'es.Services.WebApiProvider', 
         '$exceptionHandlerProvider', 
-        '$windowProvider',
-        function($logProvider, $httpProvider, $routeProvider, esWebApiServiceProvider, $exceptionHandlerProvider, esGAProvider, $windowProvider) {
+        'es.Services.GAProvider',
+        function($logProvider, $httpProvider, $routeProvider, esWebApiServiceProvider, $exceptionHandlerProvider, esAnalyticsProvider) {
 
             var interceptor = ['$q', '$sessionStorage', '$timeout', '$location', function($q, $sessionStorage, $timeout, $location) {
                 var httpHandlers = {
@@ -50,7 +50,7 @@
             }];
             $httpProvider.interceptors.push(interceptor);
 
-            
+            esAnalyticsProvider.start("UA-50505865-9", {'cookieDomain': 'none'});
 
             $logProvider.addDefaultAppenders();
 
@@ -83,9 +83,5 @@
             });
         }
     ]);
-
-    eskbApp.run(['es.Services.GA', function (esGA) {
-        esGA.create($windowProvider.$get(), "UA-50505865-9", {'cookieDomain': 'none'});
-    }]);
     
 })(window.angular, window.noty);

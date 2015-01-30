@@ -10,7 +10,7 @@
 
     /* Services */
 
-    var esWebServices = angular.module('es.Services.Web', ['ngStorage', 'ngSanitize']);
+    var esWebServices = angular.module('es.Services.Web', ['ngStorage', 'ngSanitize' /*, 'es.Services.Analytics' */]);
 
     esWebServices.
     constant('ESWEBAPI_URL', {

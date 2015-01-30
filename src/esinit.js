@@ -3,6 +3,19 @@
 
     var esWebFramework = angular.module('es.Services.Web');
 
+    function getGA($injector) {
+        if (!$injector) {
+            return undefined;
+        }
+
+        try {
+            return $injector.get('es.Services.GA');
+        } catch(x) {
+            return undefined;
+        }
+
+    }
+
     // Define the factory on the module.
     // Inject the dependencies.
     // Point to the factory definition function.
@@ -60,8 +73,8 @@
     });
 
 
-    esWebFramework.factory('es.Services.Globals', ['$sessionStorage', '$log', 'es.Services.Messaging', 'es.Services.GA',
-        function($sessionStorage, $log, esMessaging, esGA) {
+    esWebFramework.factory('es.Services.Globals', ['$sessionStorage', '$log', 'es.Services.Messaging', '$injector' /* 'es.Services.GA' */ ,
+        function($sessionStorage, $log, esMessaging, $injector) {
 
             function fgetModel() {
                 if (!esClientSession.connectionModel) {
@@ -75,6 +88,21 @@
                         esClientSession.connectionModel = session;
 
                         esMessaging.publish("AUTH_CHANGED", esClientSession, getAuthToken(session));
+
+                        var esga = getGA($injector);
+                        if (angular.isDefined(esga)) {
+                            var i;
+                            for (i = 0; i < 12; i++) {
+                                if (angular.isDefined(esga)) {
+                                    esga.registerEventTrack({
+                                        category: 'AUTH',
+                                        action: 'RELOGIN',
+                                        label: esClientSession.connectionModel.GID
+                                    });
+                                }
+                            }
+                        }
+
                         $log.info("RELOGIN User ", esClientSession.connectionModel.Name);
                     } else {
                         esMessaging.publish("AUTH_CHANGED", null, getAuthToken(null));
@@ -139,9 +167,19 @@
                         esClientSession.setModel(data.Model);
                         esClientSession.credentials = credentials;
 
-                        var i = 0;
-                        for (i = 0; i < 12; i++) {
-                            esGA.registerEventTrack({ category: 'AUTH', action: 'LOGIN', label: data.Model.GID});
+
+                        var esga = getGA($injector);
+                        if (angular.isDefined(esga)) {
+                            var i;
+                            for (i = 0; i < 12; i++) {
+                                if (angular.isDefined(esga)) {
+                                    esga.registerEventTrack({
+                                        category: 'AUTH',
+                                        action: 'LOGIN',
+                                        label: data.Model.GID
+                                    });
+                                }
+                            }
                         }
 
                         $log.info("LOGIN User ", data.Model.Name);
