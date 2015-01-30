@@ -18,7 +18,6 @@
         '$routeProvider', 
         'es.Services.WebApiProvider', 
         '$exceptionHandlerProvider', 
-        'es.Services.GAProvider', 
         '$windowProvider',
         function($logProvider, $httpProvider, $routeProvider, esWebApiServiceProvider, $exceptionHandlerProvider, esGAProvider, $windowProvider) {
 
@@ -51,7 +50,7 @@
             }];
             $httpProvider.interceptors.push(interceptor);
 
-            esGAProvider.create($windowProvider.$get(), "UA-50505865-9", {'cookieDomain': 'none'});
+            
 
             $logProvider.addDefaultAppenders();
 
@@ -71,11 +70,13 @@
             $routeProvider.
             when('/', {
                 templateUrl: 'partials/login.html',
-                controller: 'loginCtrl'
+                controller: 'loginCtrl',
+                seo: "abcd"
             }).
             when('/scroller', {
                 templateUrl: 'partials/scroller.html',
-                controller: 'scrollerCtrl'
+                controller: 'scrollerCtrl',
+                seo: "xyz"
             }).
             otherwise({
                 redirectTo: '/'
@@ -83,5 +84,8 @@
         }
     ]);
 
+    eskbApp.run(['es.Services.GA', function (esGA) {
+        esGA.create($windowProvider.$get(), "UA-50505865-9", {'cookieDomain': 'none'});
+    }]);
     
 })(window.angular, window.noty);

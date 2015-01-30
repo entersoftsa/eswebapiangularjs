@@ -141,7 +141,7 @@
 
                         var i = 0;
                         for (i = 0; i < 12; i++) {
-                            esGA('send', 'event', 'AUTH', 'LOGIN', data.Model.GID);
+                            esGA.registerEventTrack({ category: 'AUTH', action: 'LOGIN', label: data.Model.GID});
                         }
 
                         $log.info("LOGIN User ", data.Model.Name);

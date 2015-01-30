@@ -1,4 +1,4 @@
- // The "stacktrace" library that we included in the Scripts
+
  // is now in the Global scope; but, we don't want to reference
  // global objects inside the AngularJS components - that's
  // not how AngularJS rolls; as such, we want to wrap the
@@ -264,46 +264,5 @@
      );
  })();
 
- (function() {
-     'use strict';
 
-     var esModule = angular.module('es.Services.Web');
-     esModule.provider(
-         "es.Services.GA",
-         function() {
 
-             var gaKey = "";
-             return {
-                 create: function($window, key, domain) {
-                     gaKey = key;
-                     try {
-                         if (angular.isUndefined($window.ga)) {
-                             console.error("Google Analytics is not loaded!!!");
-                             return;
-                         }
-                         if (!gaKey || gaKey == "") {
-                             console.error("Google Analytics UAT Key is not defined !!!");
-                             return;
-                         }
-
-                         ga('create', gaKey, domain);
-                     } catch (exc) {
-                         console.error(exc);
-                     }
-                 },
-
-                 getGAKey: function() {
-                     return gaKey;
-                 },
-
-                 $get: ['$log', '$window',
-                     function($log, $window) {
-                         return $window.ga;
-                     }
-                 ]
-
-             };
-
-         }
-     );
- })();
