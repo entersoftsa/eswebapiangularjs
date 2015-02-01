@@ -10,7 +10,8 @@
         /* Entersoft AngularJS WEB API Provider */
         'es.Services.Web',
 
-        'eskbControllers'
+        'eskbControllers',
+        'es.Services.Social'
     ]);
 
     eskbApp.config(['$logProvider', 
@@ -19,7 +20,8 @@
         'es.Services.WebApiProvider', 
         '$exceptionHandlerProvider', 
         'es.Services.GAProvider',
-        function($logProvider, $httpProvider, $routeProvider, esWebApiServiceProvider, $exceptionHandlerProvider, esAnalyticsProvider) {
+        'esFacebookProvider',
+        function($logProvider, $httpProvider, $routeProvider, esWebApiServiceProvider, $exceptionHandlerProvider, esAnalyticsProvider, esFacebookProvider) {
 
             var interceptor = ['$q', '$sessionStorage', '$timeout', '$location', function($q, $sessionStorage, $timeout, $location) {
                 var httpHandlers = {
@@ -52,6 +54,8 @@
 
             esAnalyticsProvider.start("UA-50505865-9", {'cookieDomain': 'none'});
 
+            esFacebookProvider.init('867319009980781');
+
             $logProvider.addDefaultAppenders();
 
             $exceptionHandlerProvider.setPushToServer(true);
@@ -72,6 +76,10 @@
                 templateUrl: 'partials/login.html',
                 controller: 'loginCtrl',
                 seo: "abcd"
+            }).
+            when('/fb', {
+                templateUrl: 'partials/esfb.html',
+                seo: "xyz"
             }).
             when('/scroller', {
                 templateUrl: 'partials/scroller.html',

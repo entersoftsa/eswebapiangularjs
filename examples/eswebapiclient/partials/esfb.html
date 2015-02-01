@@ -1,0 +1,11 @@
+
+
+<div class="container" ng-controller="fbCtrl">
+    <button type="button" id="login" ng-click="login()">login</button>
+    <button type="button" id="api" ng-click="api()">api user data call</button>
+    <button type="button" id="remove_auth" ng-click="removeAuth()">remove auth</button>
+    <button type="button" id="remove_auth" ng-click="logout()">logout</button>
+    <pre>isReady: <span id="is_ready" ng-bind="facebookIsReady"></span></pre>
+    <pre>status: <span id="login_status" ng-bind="loginStatus"></span></pre>
+    <pre>username: <span id="api_first_name" ng-bind="user.first_name"></span></pre>
+</div>

@@ -2,13 +2,12 @@
 
 /* Controllers */
 
-var eskbControllers = angular.module('eskbControllers', ['kendo.directives']);
+var eskbControllers = angular.module('eskbControllers', ['kendo.directives', 'es.Services.Social']);
 
 eskbControllers.controller('mainCtrl', ['$scope', '$rootScope', 'es.Services.WebApi', 'es.Services.Globals', '$location',
     function($scope, $rootScope, esWebApiService, esGlobals, $location) {
 
-        $scope.logout = function()
-        {
+        $scope.logout = function() {
             esWebApiService.logout();
             $location.path('/login');
         }
@@ -42,6 +41,44 @@ eskbControllers.controller('loginCtrl', ['$scope', '$rootScope', 'es.Services.We
     }
 ]);
 
+eskbControllers.controller('fbCtrl', ['$scope', 'esFacebook', function($scope, esFB) {
+    $scope.loginStatus = 'disconnected';
+    $scope.facebookIsReady = false;
+    $scope.user = null;
+    $scope.login = function() {
+        esFB.login(function(response) {
+           $scope.loginStatus = response.status;
+        }, {scope: 'email'});
+    };
+
+    $scope.logout = function() {
+        esFB.logout(function(response){
+            $scope.loginStatus = response.status;
+        });
+    };
+    $scope.removeAuth = function() {
+        esFB.api({
+            method: 'Auth.revokeAuthorization'
+        }, function(response) {
+            esFB.getLoginStatus(function(response) {
+                $scope.loginStatus = response.status;
+            });
+        });
+    };
+    $scope.api = function() {
+        esFB.api('/me', function(response) {
+            $scope.user = response;
+        });
+    };
+    $scope.$watch(function() {
+        return esFB.isReady();
+    }, function(newVal) {
+        if (newVal) {
+            $scope.facebookIsReady = true;
+        }
+    });
+
+}]);
 
 eskbControllers.controller('scrollerCtrl', ['$scope', '$log', '$http', 'es.Services.WebApi',
     function($scope, $log, $http, esWebApiService) {
