@@ -54,6 +54,15 @@
                                 }
                             },
 
+                            registerException: function(excObj) {
+                                if ($window.ga && excObj) {
+                                    ga('send', 'exception', {
+                                        exDescription: JSON.stringify(excObj),
+                                        exFatal: false
+                                    });
+                                }
+                            },
+
                             registerEventTrack: function(properties) {
                                 if ($window.ga) {
                                     // do nothing if there is no category (it's required by GA)
@@ -161,24 +170,94 @@
             }
         }]);
 
-        esModule.directive('esAnalyticsOn', ['es.Services.GA', function(esAnalytics) {
+        esModule.directive('esAnalyticsOn', ['$document', 'es.Services.GA', function($document, esAnalytics) {
+
+            function isAnchor(element) {
+                return element.tagName.toLowerCase() + ':' + (element.type || '') == "a:";
+            }
+
             function isCommand(element) {
-                return ['a:', 'button:', 'button:button', 'button:submit', 'input:button', 'input:submit'].indexOf(
+                return ['button:', 'button:button', 'button:submit', 'input:button', 'input:submit'].indexOf(
                     element.tagName.toLowerCase() + ':' + (element.type || '')) >= 0;
             }
 
             function inferEventType(element) {
-                if (isCommand(element)) return 'click';
+                if (isCommand(element) || isAnchor(element)) {
+                    return 'click';
+                }
+
                 return 'click';
             }
 
-            function inferEventName(element) {
-                if (isCommand(element)) return element.innerText || element.value;
+            function inferCategory(element) {
+                if (isCommand(element)) {
+                    return "Command";
+                }
+
+                if (isAnchor(element)) {
+
+                    if (!element.href) {
+                        return "Navigate";
+                    }
+
+                    var href = element.href;
+                    var filetypes = /\.(mov|jpg|png|rar|avi|zip|exe|pdf|doc*|xls*|ppt*|mp*)$/i;
+
+                    if (href.match(/^https?\:/i)) {
+                        var isFileType = href.match(filetypes);
+                        if (!href.match($document[0].domain)) {
+                            if (isFileType) {
+                                return "External Download";
+                            }
+                            return "External Link";
+                        } else {
+                            if (isFileType) {
+                                return "Download";
+                            }
+                            return "Internal Link";
+                        }
+                    }
+                    
+                    if (href.match(/^mailto\:/i)) {
+                        return "Mail To";
+                    }
+                    if (href.match(filetypes)) {
+                        return "Download";
+                    }
+
+                    return "Navigate";
+
+                }
+
+                return element.id || element.name || element.tagName;
+            }
+
+
+            function inferAction(element) {
+                if (isCommand(element)) {
+                    return element.tagName.toLowerCase() + ':' + (element.type || '');
+                }
+
+                if (isAnchor(element)) {
+                    if (element.href) {
+                        return element.href;
+                    }
+                    return element.innerText || element.value;
+                }
+
+                return element.id || element.name || element.tagName;
+            }
+
+            function inferLabel(element) {
+                if (isCommand(element) || isAnchor(element)) {
+                    return element.innerText || element.value;
+                }
+
                 return element.id || element.name || element.tagName;
             }
 
             function isProperty(name) {
-                return name.substr(0, 11) === 'esAnalytics' && ['On', 'Event', 'If', 'Properties', 'EventType'].indexOf(name.substr(11)) === -1;
+                return name.substr(0, 11) === 'esAnalytics' && ['On', 'If', 'Properties', 'EventType'].indexOf(name.substr(11)) === -1;
             }
 
             function propertyName(name) {
@@ -205,26 +284,26 @@
                         }
                     });
 
-                    angular.element($element[0]).bind(eventType, function($event) {
-                        var eventName = $attrs.analyticsEvent || inferEventName($element[0]);
-                        trackingData.eventType = $event.type;
+                    trackingData.category = trackingData.category || inferCategory($element[0], $document);
+                    trackingData.action = trackingData.action || inferAction($element[0], $document);
+                    trackingData.label = trackingData.label || inferLabel($element[0], $document);
 
-                        if ($attrs.analyticsIf) {
-                            if (!$scope.$eval($attrs.analyticsIf)) {
+                    angular.element($element[0]).bind(eventType, function($event) {
+                        if ($attrs.esAnalyticsIf) {
+                            if (!$scope.$eval($attrs.esAnalyticsIf)) {
                                 return; // Cancel this event if we don't pass the analytics-if condition
                             }
                         }
                         // Allow components to pass through an expression that gets merged on to the event properties
                         // eg. analytics-properites='myComponentScope.someConfigExpression.$analyticsProperties'
-                        if ($attrs.analyticsProperties) {
-                            angular.extend(trackingData, $scope.$eval($attrs.analyticsProperties));
+                        if ($attrs.esAnalyticsProperties) {
+                            angular.extend(trackingData, $scope.$eval($attrs.esAnalyticsProperties));
                         }
 
-                        trackingData.action = eventName;
                         esAnalytics.registerEventTrack(trackingData);
                     });
                 }
             };
         }]);
 
-})();
+    })();

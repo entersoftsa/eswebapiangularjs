@@ -160,6 +160,12 @@
                                         }, null, '\t')
                                     });
 
+                                    // if google analytics are enabled register the exception as well
+                                    var esGA = esGlobals.getGA();
+                                    if (angular.isDefined(ga)) {
+                                        esGA.registerException(messageObj);
+                                    }
+
                                 } catch (loggingError) {
 
                                     // For Developers - log the log-failure.

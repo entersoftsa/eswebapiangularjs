@@ -3,19 +3,6 @@
 
     var esWebFramework = angular.module('es.Services.Web');
 
-    function getGA($injector) {
-        if (!$injector) {
-            return undefined;
-        }
-
-        try {
-            return $injector.get('es.Services.GA');
-        } catch(x) {
-            return undefined;
-        }
-
-    }
-
     // Define the factory on the module.
     // Inject the dependencies.
     // Point to the factory definition function.
@@ -76,6 +63,19 @@
     esWebFramework.factory('es.Services.Globals', ['$sessionStorage', '$log', 'es.Services.Messaging', '$injector' /* 'es.Services.GA' */ ,
         function($sessionStorage, $log, esMessaging, $injector) {
 
+            function fgetGA() {
+                if (!$injector) {
+                    return undefined;
+                }
+
+                try {
+                    return $injector.get('es.Services.GA');
+                } catch (x) {
+                    return undefined;
+                }
+
+            }
+
             function fgetModel() {
                 if (!esClientSession.connectionModel) {
 
@@ -89,18 +89,14 @@
 
                         esMessaging.publish("AUTH_CHANGED", esClientSession, getAuthToken(session));
 
-                        var esga = getGA($injector);
+                        var esga = fgetGA();
                         if (angular.isDefined(esga)) {
-                            var i;
-                            for (i = 0; i < 12; i++) {
-                                if (angular.isDefined(esga)) {
-                                    esga.registerEventTrack({
-                                        category: 'AUTH',
-                                        action: 'RELOGIN',
-                                        label: esClientSession.connectionModel.GID
-                                    });
-                                }
-                            }
+
+                            esga.registerEventTrack({
+                                category: 'AUTH',
+                                action: 'RELOGIN',
+                                label: esClientSession.connectionModel.GID
+                            });
                         }
 
                         $log.info("RELOGIN User ", esClientSession.connectionModel.Name);
@@ -114,9 +110,26 @@
             }
 
             function fsetModel(model) {
+                var currentGID = null;
+
+                if (esClientSession.connectionModel) {
+                    currentGID = esClientSession.connectionModel.GID;
+                }
+
                 esClientSession.connectionModel = model;
+
                 if (!model) {
                     delete $sessionStorage.__esrequest_sesssion;
+
+                    var esga = fgetGA();
+                    if (angular.isDefined(esga)) {
+                        esga.registerEventTrack({
+                            category: 'AUTH',
+                            action: 'LOGOUT',
+                            label: currentGID
+                        });
+                    }
+
                 } else {
                     $sessionStorage.__esrequest_sesssion = model;
                 }
@@ -150,6 +163,8 @@
 
             return {
 
+                getGA: fgetGA,
+
                 getWebApiToken: function() {
                     return esClientSession.getWebApiToken();
                 },
@@ -168,7 +183,7 @@
                         esClientSession.credentials = credentials;
 
 
-                        var esga = getGA($injector);
+                        var esga = fgetGA();
                         if (angular.isDefined(esga)) {
                             var i;
                             for (i = 0; i < 12; i++) {
