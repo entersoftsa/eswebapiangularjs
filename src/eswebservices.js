@@ -262,17 +262,39 @@
 
                             },
 
-                            fetchPublicQuery: function(GroupID, FilterID, Params) {
+                            /**
+                             * fetch PQ schema
+                             * @param  {string} GroupID
+                             * @param  {string} FilterID
+                             * @param  {object} Params - parameters specific to GroupID / FilterID
+                             * [@param  {string} httpVerb] - optional parameter to specify HTTP verb. Default is GET
+                             * @return {AngularHttpPromise}
+                             */
+                            fetchPublicQuery: function(GroupID, FilterID, Params, httpVerb) {
                                 var surl = urlWEBAPI.concat(ESWEBAPI_URL.__PUBLICQUERY__, GroupID, "/", FilterID);
-
-                                return $http({
-                                    method: 'get',
+                                /**
+                                 * $http object configuration
+                                 * @type {Object}
+                                 */
+                                var httpConfig = {
                                     headers: {
                                         "Authorization": esGlobals.getWebApiToken()
                                     },
                                     url: surl,
-                                    data: Params
-                                });
+                                    params: Params 
+                                };
+
+                                //if called with 3 arguments then default to a GET request
+                                httpConfig.method = (arguments.length === 3) ? 'GET' : httpVerb;
+
+                                //if not a GET request, switch to data instead of params
+                                if (httpConfig.method !== 'GET') {
+                                    delete httpConfig.params;
+                                    httpConfig.data = Params;
+                                }
+
+                                //finally return the $http promise
+                                return $http(httpConfig);
                             },
 
                             eSearch: function(eUrl, eMethod, eBody) {
