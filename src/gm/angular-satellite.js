@@ -1,5 +1,5 @@
 /**
-* @module  es.Services.Web#radio 
+* @module  gm#satellite 
 * @author  G. D. Mermigkas
 * @version 0.0.1
 *
@@ -12,7 +12,7 @@
 *
 * <pre>
 * ===========================
-* Without Angular Radio
+* Without Angular Satellite
 * ===========================
 *
 *       //content of myController.js
@@ -36,34 +36,34 @@
 *       }
 *
 * ===========================
-* With Angular Radio
+* With Angular Satellite 
 * ===========================
 *       //content of myController.js
-*       function myController($scope, Radio) {
-*           Radio.setupEvent('popup', 'exit');
+*       function myController($scope, Satellite) {
+*           Satellite.setupEvent('popup', 'exit');
 *           $scope.exit = function () {
-*               Radio.popup.raise.exit(clean)
+*               Satellite.popup.raise.exit(clean)
 *           }
 *       }
 *
 *       //content of  myDirective.js
-*       function myDirective(Radio) {
+*       function myDirective(Satellite) {
 *           return {
 *               restrict: 'A',
 *               link: function () {
-*                   Radio.popup.on.exit(function (cleanUp) {
+*                   Satellite.popup.on.exit(function (cleanUp) {
 *                       cleanUp() //do some cleanup
 *                   })
 *               }
 *           }
 *       }
 *
-*  See more examples at ../tests/radio.html
+*  See more examples at ../tests/satellite.html
 * </pre>
 *  
 */
-angular.module('es.Services.Web.Radio', []).
-provider('Radio', function () {
+angular.module('es.Services.WebApi.Satellite', []).
+provider('Satellite', function () {
 
     /**
      * todo: Allow setUp of events during config phase of the application
@@ -84,7 +84,7 @@ provider('Radio', function () {
       * holds the names for our publish / subscribe methods
       * @private @type {Array}
       */
-     var radioMethods = ['on', 'raise'];
+     var satelliteMethods = ['receive', 'transmit'];
 
      /**
       * @private
@@ -116,12 +116,12 @@ provider('Radio', function () {
         
          /**
           * set custom names for the methods that publich / subscribe an event channel
-          * @public @static setRadioMethods
+          * @public @static setsatelliteMethods
           * @param {string} onMethod e.g 'subscribe'
           * @param {string} raiseMethod e.g 'publish' 
           */
-         setRadioMethods: function (onMethod, raiseMethod) {
-            radioMethods = [onMethod, raiseMethod];
+         setEventMethods: function (onMethod, raiseMethod) {
+            satelliteMethods = [onMethod, raiseMethod];
          },
 
         $get: ['$rootScope', function ($rootScope) {
@@ -137,33 +137,32 @@ provider('Radio', function () {
                  * setup event publish / subscribe methods
                  * @param  {string} namespace - organise event in namespaces
                  * @param  {string} eventName - the eventName will be used as a method that is called on the namespace
-                 * @return {RadioInstance} - the injected instance from angular's $injector    
+                 * @return {SatelliteInstance} - the injected instance from angular's $injector    
                  * @this refers to the injected instance
                  */
-                setupEvent: function (namespace, eventName) {
+                setupTransponder: function (namespace, eventName) {
                     var self = this;
                     var feature;
                     var eventId;
                     var on, raise;
-                    self.listeners = [];
 
                     //create the event namespace if not exist
                     if (!self[namespace]) {
-                        self[namespace] = {};
+                        self[namespace] = {_transponder: namespace};
                     }
 
                     //create the pub / sub methods
                     feature = self[namespace];
                     //if any of the two pubsub methods is not a property of the namespace then create them
-                    if (!feature[radioMethods[0]]) {
-                        for (var i=0,_len = radioMethods.length; i < _len; i++) {
-                            feature[radioMethods[i]] = {};
+                    if (!feature[satelliteMethods[0]]) {
+                        for (var i=0,_len = satelliteMethods.length; i < _len; i++) {
+                            feature[satelliteMethods[i]] = {};
                         }
                     }
 
                     //cache the methods
-                    on = radioMethods[0];
-                    raise = radioMethods[1];
+                    on = satelliteMethods[0];
+                    raise = satelliteMethods[1];
                     eventId = namespace + ':' + eventName;
 
                     //create the raise method
@@ -181,6 +180,10 @@ provider('Radio', function () {
                             _handler = scope;
                              scope = $rootScope;
                              handler = _handler;
+                        } else {
+                            scope.$on('$destroy', function () {
+                                dereg();
+                            });
                         }
                         dereg = _registerEvent(scope, eventId, handler, self);
 
@@ -197,14 +200,25 @@ provider('Radio', function () {
                 }, //setupEvent
 
                 /**
+                 * todo: a transponder should be reported even if no transmission channels exist
                  * list the event subscription namespaces
                  * @return {array} a list of subscribers
                  */
-                listSubscribers: function () {
+                listTransponders: function () {
                     return this.listeners.reduce(function(memo, listener, index, array) {
-                        memo.push(listener.eventId.split(':')[0]);
+                        var _transponder = listener.eventId.split(':')[0];
+                        if (memo.indexOf(_transponder) < 0) { memo.push(_transponder); }
                         return memo;
                     }, []);
+                },
+
+                /**
+                 * returns a transponder object on which transmittions, receptions can be applied
+                 * @param  {string} tname - the transponder name
+                 * @return {object} - a transponder object with pub / syb methods
+                 */
+                transponder: function (tname) {
+                    return this[tname];
                 },
 
                 /**
@@ -212,12 +226,61 @@ provider('Radio', function () {
                  * @param  {string} subscriber - an event namespace
                  * @return {array} - a list of available method subscriptions under this namespace
                  */
-                listSubscriberMethods: function (subscriber) {
+                listTransmissions: function (subscriber) {
                     return this.listeners.reduce(function (memo, listener) {
                        if (subscriber === listener.eventId.split(':')[0]) memo.push(listener.eventId.split(':')[1]);
                        return memo;
                     }, []);
+                },
+
+
+                /**
+                 * removes a subscription "method" under a namespace "publisher"
+                 * @param  {[type]} publisher [description]
+                 * @param  {[type]} method     [description]
+                 */
+                removeTransmission: function (publisher, method) {
+                    var listeners = this.listeners;
+                    for(var i = listeners.length - 1; i >= 0; i--) {
+                        if (listeners[i].eventId.split(':')[0] === publisher && listeners[i].eventId.split(':')[1] === method) {
+                            listeners[i].dereg();
+                            listeners.splice(i, 1);
+                        }
+                    }
+                },
+
+                /**
+                 * remove all subscriptions under a given publisher name
+                 * @param  {[type]} publisher [description]
+                 * @return {[type]}           [description]
+                 */
+                removeTransmissions: function (publisher) {
+                    var listeners = this.listeners;
+                    for (var i = listeners.length - 1; i >= 0; i--) {
+                        if (listeners[i].eventId.split(':')[0] === publisher) {
+                            listeners[i].dereg();
+                            listeners.splice(i, 1);
+                        }
+                    }
+                },
+
+                /**
+                 * remove a publisher along with any of his subscriptions
+                 * @param  {[type]} publisherName [description]
+                 * @return {[type]}               [description]
+                 */
+                removeTransponder: function (publisherName) {
+                    var self = this;
+                    var listeners = self.listeners;
+                    if (angular.isDefined(self[publisherName])) {
+                        delete self[publisherName];
+                    }
+
+                    //remove any subscriptions for this publisher
+                    self.removeTransmissions(publisherName);
                 }
+
+
             };
         }]
     };
