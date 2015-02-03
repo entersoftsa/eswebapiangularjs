@@ -212,7 +212,7 @@
                             return "External Link";
                         } else {
                             if (isFileType) {
-                                return "Download";
+                                return "Internal Download";
                             }
                             return "Internal Link";
                         }
