@@ -1,11 +1,23 @@
 # eswebapiangularjs
 This is an AngularJS library that encapsulates the functionality and services provided by the Entersoft Application Server WEB API.
 
+## module es.Services.Web
+
+documentation pending...
+
+## module es.Services.Social
+
+documentation pending...
+
+## module es.Services.Analytics
+
+documentation pending...
+
 ## module es.Services.Web.Environment
 
 Provides environment mutators and related configuration. Check examples below,
 
-### Setting stage information during app config phase
+#### Setting stage information during app config phase
 
 The Environment module allows early configuration within angular's config block.
 
@@ -34,7 +46,7 @@ app.config(['EnvironmentProvider', function (EnvironmentProvider) {
 }]);
 ```
 
-### Injected instance during app runtime
+#### Injected instance during app runtime
 Once configured the Environment Provider returns an object with the following methods
 
 * environment.isDev()
