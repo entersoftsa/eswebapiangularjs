@@ -50,13 +50,13 @@
 
                             registerPageTrack: function(path) {
                                 if ($window.ga) {
-                                    ga('send', 'pageview', path);
+                                    $window.ga('send', 'pageview', path);
                                 }
                             },
 
                             registerException: function(excObj) {
                                 if ($window.ga && excObj) {
-                                    ga('send', 'exception', {
+                                    $window.ga('send', 'exception', {
                                         exDescription: JSON.stringify(excObj),
                                         exFatal: false
                                     });
@@ -94,7 +94,7 @@
                                             eventOptions['metric' + idx.toString()] = properties['metric' + idx.toString()];
                                         }
                                     }
-                                    ga('send', 'event', eventOptions);
+                                    $window.ga('send', 'event', eventOptions);
                                     /*
                                     angular.forEach($analyticsProvider.settings.ga.additionalAccountNames, function(accountName) {
                                         ga(accountName + '.send', 'event', eventOptions);

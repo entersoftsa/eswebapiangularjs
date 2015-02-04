@@ -105,38 +105,7 @@
                 $get: ['$http', '$log', '$q', '$rootScope', 'ESWEBAPI_URL', 'es.Services.Globals',
                     function($http, $log, $q, $rootScope, ESWEBAPI_URL, esGlobals) {
 
-                        return {
-
-                            getServerUrl: function() {
-                                return urlWEBAPI;
-                            },
-                            
-                            openSession: function(credentials) {
-
-                                return $http({
-                                    method: 'post',
-                                    url: urlWEBAPI + ESWEBAPI_URL.__LOGIN__,
-                                    data: {
-                                        SubscriptionID: esConfigSettings.subscriptionId,
-                                        SubscriptionPassword: esConfigSettings.subscriptionPassword,
-                                        Model: credentials
-                                    }
-                                }).
-                                success(function(data) {
-                                    esGlobals.sessionOpened(data, credentials);
-                                }).
-                                error(function(rejection) {
-                                    esGlobals.sessionClosed();
-                                    $log.error(rejection);
-                                });
-                            },
-
-                            logout: function() {
-                                esGlobals.sessionClosed();
-                                $log.info("LOGOUT User");
-                            },
-
-                            registerException: function(inMessageObj, storeToRegister) {
+                        function fregisterException(inMessageObj, storeToRegister) {
                                 if (!inMessageObj) {
                                     return;
                                 }
@@ -172,7 +141,40 @@
                                     $log.warn("Error logging failed");
                                     $log.error(loggingError);
                                 }
+                            }
+
+                        return {
+
+                            getServerUrl: function() {
+                                return urlWEBAPI;
                             },
+                            
+                            openSession: function(credentials) {
+
+                                return $http({
+                                    method: 'post',
+                                    url: urlWEBAPI + ESWEBAPI_URL.__LOGIN__,
+                                    data: {
+                                        SubscriptionID: esConfigSettings.subscriptionId,
+                                        SubscriptionPassword: esConfigSettings.subscriptionPassword,
+                                        Model: credentials
+                                    }
+                                }).
+                                success(function(data) {
+                                    esGlobals.sessionOpened(data, credentials);
+                                }).
+                                error(function(rejection) {
+                                    esGlobals.sessionClosed();
+                                    $log.error(rejection);
+                                });
+                            },
+
+                            logout: function() {
+                                esGlobals.sessionClosed();
+                                $log.info("LOGOUT User");
+                            },
+
+                            registerException: fregisterException,
 
                             fetchServerCapabilities: function() {
 
@@ -307,6 +309,18 @@
                                     },
                                     url: surl,
                                     data: eBody
+                                }).success(function(data) {
+                                    // if google analytics are enabled register the exception as well
+                                    var esGA = esGlobals.getGA();
+                                    if (angular.isDefined(ga)) {
+                                        esGA.registerEventTrack({category: "ELASTIC_SEARCH", action: "SEARCH", label: eUrl });
+                                    }
+                                }).error(function(err){
+                                    try {
+                                        fregisterException(err);
+                                    } catch(exc) {
+
+                                    }
                                 });
                             }
                         }
