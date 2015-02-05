@@ -10,7 +10,7 @@
 
     /* Services */
 
-    var esWebServices = angular.module('es.Services.Web', ['ngStorage', 'ngSanitize' /*, 'es.Services.Analytics' */]);
+    var esWebServices = angular.module('es.Services.Web', ['ngStorage', 'ngSanitize' /*, 'es.Services.Analytics' */ ]);
 
     esWebServices.
     constant('ESWEBAPI_URL', {
@@ -106,50 +106,52 @@
                     function($http, $log, $q, $rootScope, ESWEBAPI_URL, esGlobals) {
 
                         function fregisterException(inMessageObj, storeToRegister) {
-                                if (!inMessageObj) {
-                                    return;
-                                }
-
-                                var messageObj = angular.copy(inMessageObj);
-
-                                try {
-                                    messageObj.__SubscriptionID = esConfigSettings.subscriptionId;
-                                    messageObj.__ServerUrl = urlWEBAPI;
-                                    messageObj.__EDate = new Date();
-                                    $.ajax({
-                                        type: "POST",
-                                        url: urlWEBAPI.concat(ESWEBAPI_URL.__REGISTER_EXCEPTION__),
-                                        contentType: "application/json",
-                                        headers: {
-                                            "Authorization": esGlobals.getWebApiToken()
-                                        },
-                                        data: JSON.stringify({
-                                            exceptionData: messageObj,
-                                            exceptionStore: storeToRegister
-                                        }, null, '\t')
-                                    });
-
-                                    // if google analytics are enabled register the exception as well
-                                    var esGA = esGlobals.getGA();
-                                    if (angular.isDefined(ga)) {
-                                        esGA.registerException(messageObj);
-                                    }
-
-                                } catch (loggingError) {
-
-                                    // For Developers - log the log-failure.
-                                    $log.warn("Error logging failed");
-                                    $log.error(loggingError);
-                                }
+                            if (!inMessageObj) {
+                                return;
                             }
+
+                            var messageObj = angular.copy(inMessageObj);
+
+                            try {
+                                messageObj.__SubscriptionID = esConfigSettings.subscriptionId;
+                                messageObj.__ServerUrl = urlWEBAPI;
+                                messageObj.__EDate = new Date();
+                                $.ajax({
+                                    type: "POST",
+                                    url: urlWEBAPI.concat(ESWEBAPI_URL.__REGISTER_EXCEPTION__),
+                                    contentType: "application/json",
+                                    headers: {
+                                        "Authorization": esGlobals.getWebApiToken()
+                                    },
+                                    data: JSON.stringify({
+                                        exceptionData: messageObj,
+                                        exceptionStore: storeToRegister
+                                    }, null, '\t')
+                                });
+
+                                // if google analytics are enabled register the exception as well
+                                var esGA = esGlobals.getGA();
+                                if (angular.isDefined(ga)) {
+                                    esGA.registerException(messageObj);
+                                }
+
+                            } catch (loggingError) {
+
+                                // For Developers - log the log-failure.
+                                $log.warn("Error logging failed");
+                                $log.error(loggingError);
+                            }
+                        }
 
                         return {
 
                             getServerUrl: function() {
                                 return urlWEBAPI;
                             },
-                            
+
                             openSession: function(credentials) {
+                                var tt = esGlobals.trackTimer("AUTH", "LOGIN", "");
+                                tt.startTime();
 
                                 return $http({
                                     method: 'post',
@@ -162,6 +164,7 @@
                                 }).
                                 success(function(data) {
                                     esGlobals.sessionOpened(data, credentials);
+                                    tt.endTime().send();
                                 }).
                                 error(function(rejection) {
                                     esGlobals.sessionClosed();
@@ -199,8 +202,10 @@
 
                             fetchSimpleScrollerRootTable: function(GroupID, FilterID, Params) {
                                 var surl = urlWEBAPI.concat(ESWEBAPI_URL.__SCROLLERROOTTABLE__, GroupID, "/", FilterID);
+                                var tt = esGlobals.trackTimer("SCR", "FETCH", GroupID.concat("/", FilterID));
+                                tt.startTime();
 
-                                return $http({
+                                var ht = $http({
                                     method: 'get',
                                     headers: {
                                         "Authorization": esGlobals.getWebApiToken()
@@ -208,6 +213,11 @@
                                     url: surl,
                                     data: Params
                                 });
+
+                                ht.then(function() {
+                                    tt.endTime().send();
+                                });
+                                return ht;
                             },
 
                             fetchUserSites: function(ebsuser) {
@@ -224,8 +234,10 @@
 
                             executeNewEntityAction: function(entityType, entityObject, actionID) {
                                 var surl = urlWEBAPI.concat(ESWEBAPI_URL.__ENTITYACTION__, entityType, "/", actionID);
+                                var tt = esGlobals.trackTimer("ACTION", "NEW_ENTITY", entityType.concat("/", actionID));
+                                tt.startTime();
 
-                                return $http({
+                                var ht = $http({
                                     method: 'post',
                                     headers: {
                                         "Authorization": esGlobals.getWebApiToken()
@@ -233,13 +245,18 @@
                                     url: surl,
                                     data: entityObject
                                 });
-
+                                ht.then(function() {
+                                    tt.endTime().send();
+                                });
+                                return ht;
                             },
 
                             executeEntityActionByCode: function(entityType, entityCode, entityObject, actionID) {
                                 var surl = urlWEBAPI.concat(ESWEBAPI_URL.__ENTITYACTION__, entityType, "/", entityCode, "/", actionID);
+                                var tt = esGlobals.trackTimer("ACTION", "ENTITY_CODE", entityType.concat("/", actionID));
+                                tt.startTime();
 
-                                return $http({
+                                var ht = $http({
                                     method: 'post',
                                     headers: {
                                         "Authorization": esGlobals.getWebApiToken()
@@ -248,12 +265,18 @@
                                     data: entityObject
                                 });
 
+                                ht.then(function() {
+                                    tt.endTime().send();
+                                });
+                                return ht;
                             },
 
                             executeEntityActionByGID: function(entityType, entityGID, entityObject, actionID) {
                                 var surl = urlWEBAPI.concat(ESWEBAPI_URL.__ENTITYBYGIDACTION__, entityType, "/", entityGID, "/", actionID);
+                                var tt = esGlobals.trackTimer("ACTION", "ENTITY_GID", entityType.concat("/", actionID));
+                                tt.startTime();
 
-                                return $http({
+                                var ht = $http({
                                     method: 'post',
                                     headers: {
                                         "Authorization": esGlobals.getWebApiToken()
@@ -261,6 +284,11 @@
                                     url: surl,
                                     data: entityObject
                                 });
+
+                                ht.then(function() {
+                                    tt.endTime().send();
+                                });
+                                return ht;
 
                             },
 
@@ -274,6 +302,9 @@
                              */
                             fetchPublicQuery: function(GroupID, FilterID, Params, httpVerb) {
                                 var surl = urlWEBAPI.concat(ESWEBAPI_URL.__PUBLICQUERY__, GroupID, "/", FilterID);
+                                var tt = esGlobals.trackTimer("PQ", "FETCH", GroupID.concat("/", FilterID));
+                                tt.startTime();
+
                                 /**
                                  * $http object configuration
                                  * @type {Object}
@@ -283,7 +314,7 @@
                                         "Authorization": esGlobals.getWebApiToken()
                                     },
                                     url: surl,
-                                    params: Params 
+                                    params: Params
                                 };
 
                                 //if called with 3 arguments then default to a GET request
@@ -295,8 +326,13 @@
                                     httpConfig.data = Params;
                                 }
 
+                                var ht = $http(httpConfig);
+                                ht.then(function() {
+                                    tt.endTime().send();
+                                });
+
                                 //finally return the $http promise
-                                return $http(httpConfig);
+                                return ht;
                             },
 
                             eSearch: function(eUrl, eMethod, eBody) {
@@ -313,12 +349,16 @@
                                     // if google analytics are enabled register the exception as well
                                     var esGA = esGlobals.getGA();
                                     if (angular.isDefined(ga)) {
-                                        esGA.registerEventTrack({category: "ELASTIC_SEARCH", action: "SEARCH", label: eUrl });
+                                        esGA.registerEventTrack({
+                                            category: "ELASTIC_SEARCH",
+                                            action: "SEARCH",
+                                            label: eUrl
+                                        });
                                     }
-                                }).error(function(err){
+                                }).error(function(err) {
                                     try {
                                         fregisterException(err);
-                                    } catch(exc) {
+                                    } catch (exc) {
 
                                     }
                                 });

@@ -159,7 +159,35 @@
                 getModel: fgetModel
             };
 
+            function TrackTiming(category, variable, opt_label) {
+                this.category = category;
+                this.variable = variable;
+                this.label = opt_label ? opt_label : undefined;
+                this.startTime;
+                this.endTime;
+                return this;
+            }
 
+            TrackTiming.prototype.startTime = function() {
+                this.startTime = new Date().getTime();
+                return this;
+            }
+
+            TrackTiming.prototype.endTime = function() {
+                this.endTime = new Date().getTime();
+                return this;
+            }
+
+            TrackTiming.prototype.send = function() {
+                var timeSpent = this.endTime - this.startTime;
+                var esga = fgetGA();
+                if (!esga) {
+                    return;
+                }
+
+                esga.registerTiming({timingCategory: this.category, timingVar: this.variable, timingValue:  timeSpent, timingLabel: this.label });
+                return this;
+            }
 
             return {
 
@@ -175,6 +203,10 @@
 
                 sessionClosed: function() {
                     esClientSession.setModel(null);
+                },
+
+                trackTimer: function(category, variable, opt_label) {
+                    return new TrackTiming(category, variable, opt_label);
                 },
 
                 sessionOpened: function(data, credentials) {

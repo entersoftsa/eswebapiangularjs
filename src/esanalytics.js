@@ -63,6 +63,30 @@
                                 }
                             },
 
+                            registerTiming: function(properties) {
+                                if ($window.ga) {
+                                    // do nothing if there is no category (it's required by GA)
+                                    if (!properties || !properties.timingCategory || !properties.timingVar || !properties.timingValue) {
+                                        return;
+                                    }
+
+                                     if (properties.timingValue) {
+                                        var parsed = parseInt(properties.timingValue, 10);
+                                        properties.timingValue = isNaN(parsed) ? 0 : parsed;
+                                        if (properties.timingValue == 0) {
+                                            return;
+                                        }
+                                    }
+                                    
+                                    $window.ga('send', 'timing', properties);
+                                    /*
+                                    angular.forEach($analyticsProvider.settings.ga.additionalAccountNames, function(accountName) {
+                                        ga(accountName + '.send', 'event', eventOptions);
+                                    });
+                                    */
+                                }
+                            },
+
                             registerEventTrack: function(properties) {
                                 if ($window.ga) {
                                     // do nothing if there is no category (it's required by GA)
@@ -217,7 +241,7 @@
                             return "Internal Link";
                         }
                     }
-                    
+
                     if (href.match(/^mailto\:/i)) {
                         return "Mail To";
                     }
