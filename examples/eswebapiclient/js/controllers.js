@@ -88,6 +88,10 @@ eskbControllers.controller('scrollerCtrl', ['$scope', '$log', '$http', 'es.Servi
         $scope.PQResults = {};
         $scope.gridOptions = {};
 
+        $scope.onSeriesClick = function(e) {
+            alert("Name = " + e.series.name + "Value = " + e.value);
+        }
+
         $scope.executePQ = function() {
             esWebApiService.fetchPublicQuery($scope.GroupID, $scope.FilterID, {})
                 .success(function(pq) {
