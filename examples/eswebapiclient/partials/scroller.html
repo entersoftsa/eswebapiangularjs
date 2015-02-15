@@ -23,7 +23,6 @@
                  k-legend="{ position: 'bottom' }"
                  k-series-defaults="{ type: 'line' }"
                  k-series="[
-                                 
                                  { field: 'RequestNatureAA', name: 'Maturity' }
                              ]"
                  k-data-source="PQResults['ESTMTaskRows']"
@@ -42,7 +41,7 @@
         Table {{td}} has {{tr.length}} rows
         </h2>
         
-        <kendo-grid k-data-source="{{tr}}" k-pageable="true" k-sortable="true" k-columns="getColumnDefinitions({{tr}})">
+        <kendo-grid k-options="mainGridOptions({{tr}})">
         </kendo-grid>
         
     </div>

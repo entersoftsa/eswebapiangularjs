@@ -2,7 +2,7 @@
 
 /* Controllers */
 
-var eskbControllers = angular.module('eskbControllers', ['kendo.directives', 'es.Services.Social']);
+var eskbControllers = angular.module('eskbControllers', ['kendo.directives', 'es.Services.Social', 'underscore']);
 
 eskbControllers.controller('mainCtrl', ['$scope', '$rootScope', 'es.Services.WebApi', 'es.Services.Globals', '$location',
     function($scope, $rootScope, esWebApiService, esGlobals, $location) {
@@ -47,12 +47,14 @@ eskbControllers.controller('fbCtrl', ['$scope', 'esFacebook', function($scope, e
     $scope.user = null;
     $scope.login = function() {
         esFB.login(function(response) {
-           $scope.loginStatus = response.status;
-        }, {scope: 'email'});
+            $scope.loginStatus = response.status;
+        }, {
+            scope: 'email'
+        });
     };
 
     $scope.logout = function() {
-        esFB.logout(function(response){
+        esFB.logout(function(response) {
             $scope.loginStatus = response.status;
         });
     };
@@ -80,13 +82,14 @@ eskbControllers.controller('fbCtrl', ['$scope', 'esFacebook', function($scope, e
 
 }]);
 
-eskbControllers.controller('scrollerCtrl', ['$scope', '$log', '$http', 'es.Services.WebApi',
-    function($scope, $log, $http, esWebApiService) {
+eskbControllers.controller('scrollerCtrl', ['$scope', '$log', '$http', 'es.Services.WebApi', '_',
+    function($scope, $log, $http, esWebApiService, _) {
 
         $scope.GroupID = "ESTMTask";
         $scope.FilterID = "RequestsToBeApproved";
         $scope.PQResults = {};
         $scope.gridOptions = {};
+        $scope.ChartData = {};
 
         $scope.onSeriesClick = function(e) {
             alert("Name = " + e.series.name + "Value = " + e.value);
@@ -102,6 +105,8 @@ eskbControllers.controller('scrollerCtrl', ['$scope', '$log', '$http', 'es.Servi
                         $log.info('  ' + key + ' -> ' + pq[key].length);
                     }
 
+
+
                 })
                 .error(function(rejection) {
                     $scope.PQResults = {};
@@ -116,6 +121,18 @@ eskbControllers.controller('scrollerCtrl', ['$scope', '$log', '$http', 'es.Servi
                 })
         }
 
+        $scope.mainGridOptions = function(dt) {
+            
+            return {
+                dataSource: {
+                    data: dt,
+                    pageSize: 5
+                },
+                sortable: true,
+                pageable: true,
+                columns: $scope.getColumnDefinitions(dt)
+            };
+        }
 
         $scope.getColumnDefinitions = function(dt) {
             var kendocols = [];
