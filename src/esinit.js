@@ -1,6 +1,12 @@
 (function() {
     'use strict';
 
+    var underscore = angular.module('underscore', []);
+    underscore.factory('_', function() {
+        return window._; //Underscore must already be loaded on the page 
+    });
+
+
     var esWebFramework = angular.module('es.Services.Web');
 
     // Define the factory on the module.
@@ -185,7 +191,12 @@
                     return;
                 }
 
-                esga.registerTiming({timingCategory: this.category, timingVar: this.variable, timingValue:  timeSpent, timingLabel: this.label });
+                esga.registerTiming({
+                    timingCategory: this.category,
+                    timingVar: this.variable,
+                    timingValue: timeSpent,
+                    timingLabel: this.label
+                });
                 return this;
             }
 
