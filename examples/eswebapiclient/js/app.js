@@ -63,7 +63,8 @@
 
             var subscriptionId = "";
             esWebApiServiceProvider.setSettings({
-                host: "eswebapialp.azurewebsites.net",
+                // host: "eswebapialp.azurewebsites.net",
+                host: "eswebapi.entersoft.gr",
                 subscriptionId: subscriptionId,
                 subscriptionPassword: "passx",
                 allowUnsecureConnection: false
