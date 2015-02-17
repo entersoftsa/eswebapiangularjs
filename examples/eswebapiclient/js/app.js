@@ -67,7 +67,7 @@
                 host: "eswebapi.entersoft.gr",
                 subscriptionId: subscriptionId,
                 subscriptionPassword: "passx",
-                allowUnsecureConnection: false
+                allowUnsecureConnection: true
             });
 
             $logProvider.addESWebApiAppender(esWebApiServiceProvider.getServerUrl(), subscriptionId);

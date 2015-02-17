@@ -30,8 +30,9 @@ eskbControllers.controller('loginCtrl', ['$scope', '$rootScope', 'es.Services.We
                     $location.path('/scroller');
                 })
                 .error(function(rejection) {
+                    var msg = rejection ? rejection.UserMessage : "Generic server error";
                     noty({
-                        text: rejection.UserMessage,
+                        text: msg,
                         type: 'error',
                         timeout: 3000,
                         killer: true

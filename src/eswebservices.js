@@ -166,9 +166,13 @@
                                     esGlobals.sessionOpened(data, credentials);
                                     tt.endTime().send();
                                 }).
-                                error(function(rejection) {
+                                error(function(data, status, headers, config) {
                                     esGlobals.sessionClosed();
-                                    $log.error(rejection);
+                                    if (data) {
+                                        $log.error(data);
+                                    } else {
+                                        console.log("Generic Http error");
+                                    }
                                 });
                             },
 

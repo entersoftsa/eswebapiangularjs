@@ -46,7 +46,7 @@
                      return;
                  }
 
-                 if (lt && session) {
+                 if (lt && session && session.connectionModel) {
                      lt.setCustomField("userId", session.connectionModel.UserID);
                      if (session.credentials) {
                          lt.setCustomField("branchId", session.credentials.BranchID);
