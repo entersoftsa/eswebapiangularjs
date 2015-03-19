@@ -9,6 +9,78 @@
 
     var esWebFramework = angular.module('es.Services.Web');
 
+
+    esWebFramework.provider('es.Services.Cache', function() {
+        var cache = null;
+        var settings = {};
+        settings.maxSize = -1;
+        settings.storage = null;
+
+        return {
+            setMaxSize: function(size) {
+                if (angular.isNumber(size))
+                {
+                    settings.maxSize = size;
+                }
+            },
+
+            getMaxSize: function() {
+                return settings.maxSize;
+            },
+
+            getStorageSettings: function() {
+                return settings.storage;
+            },
+
+            setStorageSettings: function(setings) {
+                if (settings) {
+                    settings.storage = settings;
+                }
+            },
+
+            $get: function() {
+                if (typeof(Cache) === 'undefined') {
+                    throw "You must include jscache.js";
+                }
+
+                cache = new Cache(settings.maxSize, false, settings.storage);
+
+                return {
+                    getItem: function(key) {
+                        return cache.getItem(key);
+                    },
+
+                    setItem: function(key, val, options) {
+                        cache.setItem(key, val, options);
+                    },
+
+                    removeItem: function(key) {
+                        cache.removeItem(key);
+                    },
+
+                    removeWhere: function(f)
+                    {
+                        cache.removeWhere(function(k, v) { return f(k, v); });
+                    },
+
+                    size: function() {
+                        return cache.size();
+                    },
+
+                    clear: function() {
+                        cache.clear();
+                    },
+
+                    stats: function() {
+                        return cache.stats();
+                    }
+                }
+            }
+
+        }
+
+    });
+
     // Define the factory on the module.
     // Inject the dependencies.
     // Point to the factory definition function.

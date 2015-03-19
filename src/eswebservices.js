@@ -22,7 +22,9 @@
         __ENTITYBYGIDACTION__: "api/EntityByGID/",
         __ELASTICSEARCH__: "api/esearch/",
         __SERVER_CAPABILITIES__: "api/Login/ServerCapabilities/",
-        __REGISTER_EXCEPTION__: "api/rpc/registerException/"
+        __REGISTER_EXCEPTION__: "api/rpc/registerException/",
+        __FETCH_COMPANY_PARAM__: "api/rpc/FetchCompanyParam/",
+        __FETCH_COMPANY_PARAMS__: "api/rpc/FetchCompanyParams/"
 
     });
 
@@ -99,8 +101,6 @@
                     }
                     return this;
                 },
-
-
 
                 $get: ['$http', '$log', '$q', '$rootScope', 'ESWEBAPI_URL', 'es.Services.Globals',
                     function($http, $log, $q, $rootScope, ESWEBAPI_URL, esGlobals) {
@@ -179,6 +179,45 @@
                             logout: function() {
                                 esGlobals.sessionClosed();
                                 $log.info("LOGOUT User");
+                            },
+
+                            fetchCompanyParam: function(esparam) {
+                                if (!esparam) {
+                                    return undefined;
+                                }
+
+                                var surl = urlWEBAPI.concat(ESWEBAPI_URL.__FETCH_COMPANY_PARAM__, esparam);
+                                var ht = $http({
+                                    method: 'get',
+                                    headers: {
+                                        "Authorization": esGlobals.getWebApiToken()
+                                    },
+                                    url: surl
+                                });
+                                return ht;
+                            },
+
+                            fetchCompanyParams: function(esparam) {
+                                var surl;
+                                if (!esparam) {
+                                    // get all parameters
+                                    surl = urlWEBAPI + ESWEBAPI_URL.__FETCH_COMPANY_PARAMS__;
+                                } else {
+                                    if (angular.isArray(esparam)) {
+                                        surl = urlWEBAPI + ESWEBAPI_URL.__FETCH_COMPANY_PARAMS__ + esparam.join("/");
+                                    } else {
+                                        surl = urlWEBAPI + ESWEBAPI_URL.__FETCH_COMPANY_PARAMS__ + esparam;
+                                    }
+                                }
+                               
+                                var ht = $http({
+                                    method: 'get',
+                                    headers: {
+                                        "Authorization": esGlobals.getWebApiToken()
+                                    },
+                                    url: surl
+                                });
+                                return ht;
                             },
 
                             registerException: fregisterException,

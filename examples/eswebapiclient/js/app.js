@@ -63,11 +63,11 @@
 
             var subscriptionId = "";
             esWebApiServiceProvider.setSettings({
-                // host: "eswebapialp.azurewebsites.net",
-                host: "eswebapi.entersoft.gr",
+                host: "eswebapialp.azurewebsites.net",
+                //host: "eswebapi.entersoft.gr",
                 subscriptionId: subscriptionId,
                 subscriptionPassword: "passx",
-                allowUnsecureConnection: true
+                allowUnsecureConnection: false
             });
 
             $logProvider.addESWebApiAppender(esWebApiServiceProvider.getServerUrl(), subscriptionId);

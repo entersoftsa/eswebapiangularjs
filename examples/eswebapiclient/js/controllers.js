@@ -83,8 +83,8 @@ eskbControllers.controller('fbCtrl', ['$scope', 'esFacebook', function($scope, e
 
 }]);
 
-eskbControllers.controller('scrollerCtrl', ['$scope', '$log', '$http', 'es.Services.WebApi', '_',
-    function($scope, $log, $http, esWebApiService, _) {
+eskbControllers.controller('scrollerCtrl', ['$scope', '$log', '$http', 'es.Services.WebApi', '_', 'es.Services.Cache',
+    function($scope, $log, $http, esWebApiService, _, cache) {
 
         $scope.GroupID = "ESTMTask";
         $scope.FilterID = "RequestsToBeApproved";
@@ -97,17 +97,26 @@ eskbControllers.controller('scrollerCtrl', ['$scope', '$log', '$http', 'es.Servi
         }
 
         $scope.executePQ = function() {
+
+            esWebApiService.fetchCompanyParams()
+            .success(function(x) {
+                $log.info  (x);
+            });
+
+            $scope.PQResults = cache.getItem("DS");
+            if ($scope.PQResults) {
+                return;
+            }
+
             esWebApiService.fetchPublicQuery($scope.GroupID, $scope.FilterID, {})
                 .success(function(pq) {
                     $scope.PQResults = pq;
+                    cache.setItem("DS", pq, {expirationAbsolute: null, expirationSliding: 10, priority: Cache.Priority.HIGH});
 
                     $log.info('PublicQuery OK! ' + Object.keys(pq).length);
                     for (var key in pq) {
                         $log.info('  ' + key + ' -> ' + pq[key].length);
                     }
-
-
-
                 })
                 .error(function(rejection) {
                     $scope.PQResults = {};
