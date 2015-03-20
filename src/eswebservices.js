@@ -18,14 +18,15 @@
         __PUBLICQUERY__: "api/rpc/PublicQuery/",
         __USERSITES__: "api/Login/Usersites",
         __SCROLLERROOTTABLE__: "api/rpc/SimpleScrollerRootTable/",
+        __SCROLLER__: "api/rpc/SimpleScroller/",
         __ENTITYACTION__: "api/Entity/",
         __ENTITYBYGIDACTION__: "api/EntityByGID/",
         __ELASTICSEARCH__: "api/esearch/",
         __SERVER_CAPABILITIES__: "api/Login/ServerCapabilities/",
         __REGISTER_EXCEPTION__: "api/rpc/registerException/",
         __FETCH_COMPANY_PARAM__: "api/rpc/FetchCompanyParam/",
-        __FETCH_COMPANY_PARAMS__: "api/rpc/FetchCompanyParams/"
-
+        __FETCH_COMPANY_PARAMS__: "api/rpc/FetchCompanyParams/",
+        __SCROLLER_COMMAND__: "api/rpc/ScrollerCommand/"
     });
 
     esWebServices.value("__WEBAPI_RT__", {
@@ -143,6 +144,51 @@
                             }
                         }
 
+                        function execScrollerCommand(scrollerCommandParams)
+                        {
+                            if (angular.isUndefined(scrollerCommandParams) || !scrollerCommandParams.ScrollerID || !scrollerCommandParams.commandID) {
+                                throw "ScrollerID and CommandID properties must be defined";
+                            }
+                            var surl = ESWEBAPI_URL.__SCROLLER_COMMAND__;
+
+                            var tt = esGlobals.trackTimer("SCR", "COMMAND", scrollerCommandParams.ScrollerID .concat("/", scrollerCommandParams.commandID));
+                            tt.startTime();
+
+                            var ht = $http({
+                                method: 'post',
+                                headers: {
+                                    "Authorization": esGlobals.getWebApiToken()
+                                },
+                                url: surl,
+                                data: scrollerCommandParams
+                            });
+
+                            ht.then(function() {
+                                tt.endTime().send();
+                            });
+                            return ht;
+                        }
+
+                        function execScroller(apiUrl, groupID, filterID, params) {
+                            var surl = urlWEBAPI.concat(apiUrl, groupID, "/", filterID);
+                            var tt = esGlobals.trackTimer("SCR", "FETCH", groupID.concat("/", filterID));
+                            tt.startTime();
+
+                            var ht = $http({
+                                method: 'get',
+                                headers: {
+                                    "Authorization": esGlobals.getWebApiToken()
+                                },
+                                url: surl,
+                                data: params
+                            });
+
+                            ht.then(function() {
+                                tt.endTime().send();
+                            });
+                            return ht;
+                        }
+
                         return {
 
                             getServerUrl: function() {
@@ -209,7 +255,7 @@
                                         surl = urlWEBAPI + ESWEBAPI_URL.__FETCH_COMPANY_PARAMS__ + esparam;
                                     }
                                 }
-                               
+
                                 var ht = $http({
                                     method: 'get',
                                     headers: {
@@ -243,24 +289,12 @@
                                 return defered.promise;
                             },
 
-                            fetchSimpleScrollerRootTable: function(GroupID, FilterID, Params) {
-                                var surl = urlWEBAPI.concat(ESWEBAPI_URL.__SCROLLERROOTTABLE__, GroupID, "/", FilterID);
-                                var tt = esGlobals.trackTimer("SCR", "FETCH", GroupID.concat("/", FilterID));
-                                tt.startTime();
+                            fetchScroller: function(grouID, filterID, params) {
+                                return execScroller(ESWEBAPI_URL.__SCROLLER__, groupID, filterID, params);
+                            },
 
-                                var ht = $http({
-                                    method: 'get',
-                                    headers: {
-                                        "Authorization": esGlobals.getWebApiToken()
-                                    },
-                                    url: surl,
-                                    data: Params
-                                });
-
-                                ht.then(function() {
-                                    tt.endTime().send();
-                                });
-                                return ht;
+                            fetchSimpleScrollerRootTable: function(groupID, filterID, params) {
+                                return execScroller(ESWEBAPI_URL.__SCROLLERROOTTABLE__, groupID, filterID, params);
                             },
 
                             fetchUserSites: function(ebsuser) {
@@ -275,7 +309,7 @@
                                 });
                             },
 
-                            executeNewEntityAction: function(entityType, entityObject, actionID) {
+                            executeNewEntityAction: function(entityType, actionID, commandParams) {
                                 var surl = urlWEBAPI.concat(ESWEBAPI_URL.__ENTITYACTION__, entityType, "/", actionID);
                                 var tt = esGlobals.trackTimer("ACTION", "NEW_ENTITY", entityType.concat("/", actionID));
                                 tt.startTime();
@@ -286,7 +320,7 @@
                                         "Authorization": esGlobals.getWebApiToken()
                                     },
                                     url: surl,
-                                    data: entityObject
+                                    data: commandParams
                                 });
                                 ht.then(function() {
                                     tt.endTime().send();
@@ -294,7 +328,7 @@
                                 return ht;
                             },
 
-                            executeEntityActionByCode: function(entityType, entityCode, entityObject, actionID) {
+                            executeEntityActionByCode: function(entityType, entityCode, actionID, commandParams) {
                                 var surl = urlWEBAPI.concat(ESWEBAPI_URL.__ENTITYACTION__, entityType, "/", entityCode, "/", actionID);
                                 var tt = esGlobals.trackTimer("ACTION", "ENTITY_CODE", entityType.concat("/", actionID));
                                 tt.startTime();
@@ -305,7 +339,7 @@
                                         "Authorization": esGlobals.getWebApiToken()
                                     },
                                     url: surl,
-                                    data: entityObject
+                                    data: commandParams
                                 });
 
                                 ht.then(function() {
@@ -314,7 +348,7 @@
                                 return ht;
                             },
 
-                            executeEntityActionByGID: function(entityType, entityGID, entityObject, actionID) {
+                            executeEntityActionByGID: function(entityType, entityGID, actionID, commandParams) {
                                 var surl = urlWEBAPI.concat(ESWEBAPI_URL.__ENTITYBYGIDACTION__, entityType, "/", entityGID, "/", actionID);
                                 var tt = esGlobals.trackTimer("ACTION", "ENTITY_GID", entityType.concat("/", actionID));
                                 tt.startTime();
@@ -325,7 +359,7 @@
                                         "Authorization": esGlobals.getWebApiToken()
                                     },
                                     url: surl,
-                                    data: entityObject
+                                    data: commandParams
                                 });
 
                                 ht.then(function() {
@@ -333,6 +367,31 @@
                                 });
                                 return ht;
 
+                            },
+
+                            executeScrollerCommand: function(scrollerCommandParams) {
+                                return execScrollerCommand(scrollerCommandParams);
+                            },
+
+                            executeScrollerCommandSRV: function(groupID, filterID, commandID, scrollerParams, commandParams) {
+
+                                var scrollerCommandParams = {
+                                    ScrollerID: groupID + "/" + filterID,
+                                    CommandID: commandID,
+                                    ScrollerParams: scrollerParams,
+                                    CommandParams: commandParams
+                                };
+                                return execScrollerCommand(scrollerCommandParams);
+                            },
+
+                            executeScrollerCommandDS: function(groupID, filterID, commandID, dataSet, commandParams) {
+                                var scrollerCommandParams = {
+                                    ScrollerID: groupID + "/" + filterID,
+                                    CommandID: commandID,
+                                    ScrollerDataset: dataSet,
+                                    CommandParams: commandParams
+                                };
+                                return execScrollerCommand(scrollerCommandParams);
                             },
 
                             /**
@@ -377,6 +436,8 @@
                                 //finally return the $http promise
                                 return ht;
                             },
+
+
 
                             eSearch: function(eUrl, eMethod, eBody) {
                                 var surl = urlWEBAPI.concat(ESWEBAPI_URL.__ELASTICSEARCH__, eUrl);
