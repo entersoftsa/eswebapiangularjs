@@ -200,12 +200,12 @@
                             tt.startTime();
 
                             var ht = $http({
-                                method: 'get',
+                                method: 'GET',
                                 headers: {
                                     "Authorization": esGlobals.getWebApiToken()
                                 },
                                 url: surl,
-                                data: params
+                                params: params
                             });
 
                             ht.then(function() {
@@ -314,7 +314,7 @@
                                 return defered.promise;
                             },
 
-                            fetchScroller: function(grouID, filterID, params) {
+                            fetchScroller: function(groupID, filterID, params) {
                                 return execScroller(ESWEBAPI_URL.__SCROLLER__, groupID, filterID, params);
                             },
 
