@@ -98,10 +98,17 @@ eskbControllers.controller('scrollerCtrl', ['$scope', '$log', '$http', 'es.Servi
 
         $scope.executePQ = function() {
 
-            esWebApiService.fetchCompanyParams()
-            .success(function(x) {
-                $log.info  (x);
-            });
+            var companyParams = cache.getItem("ESParams");
+            if (!companyParams) {
+                esWebApiService.fetchCompanyParams()
+                    .success(function(x) {
+                        cache.setItem("ESParams", x);
+                        $log.info(x);
+                    });
+            } else {
+                $log.info("Found Params in cache " + companyParams.length + " elements");
+            }
+
 
             $scope.PQResults = cache.getItem("DS");
             if ($scope.PQResults) {
@@ -111,7 +118,11 @@ eskbControllers.controller('scrollerCtrl', ['$scope', '$log', '$http', 'es.Servi
             esWebApiService.fetchPublicQuery($scope.GroupID, $scope.FilterID, {})
                 .success(function(pq) {
                     $scope.PQResults = pq;
-                    cache.setItem("DS", pq, {expirationAbsolute: null, expirationSliding: 10, priority: Cache.Priority.HIGH});
+                    cache.setItem("DS", pq, {
+                        expirationAbsolute: null,
+                        expirationSliding: 10,
+                        priority: Cache.Priority.HIGH
+                    });
 
                     $log.info('PublicQuery OK! ' + Object.keys(pq).length);
                     for (var key in pq) {
@@ -132,7 +143,7 @@ eskbControllers.controller('scrollerCtrl', ['$scope', '$log', '$http', 'es.Servi
         }
 
         $scope.mainGridOptions = function(dt) {
-            
+
             return {
                 dataSource: {
                     data: dt,
