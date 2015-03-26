@@ -1,7 +1,7 @@
 /***********************************
  * Entersoft SA
  * http://www.entersoft.eu
- * v0.0.11
+ * v0.0.72
  *
  ***********************************/
 
@@ -26,7 +26,8 @@
         __REGISTER_EXCEPTION__: "api/rpc/registerException/",
         __FETCH_COMPANY_PARAM__: "api/rpc/FetchCompanyParam/",
         __FETCH_COMPANY_PARAMS__: "api/rpc/FetchCompanyParams/",
-        __SCROLLER_COMMAND__: "api/rpc/ScrollerCommand/"
+        __SCROLLER_COMMAND__: "api/rpc/ScrollerCommand/",
+        __FORM_COMMAND__: "api/rpc/FormCommand/"
     });
 
     esWebServices.value("__WEBAPI_RT__", {
@@ -146,12 +147,12 @@
 
                         function execScrollerCommand(scrollerCommandParams)
                         {
-                            if (angular.isUndefined(scrollerCommandParams) || !scrollerCommandParams.ScrollerID || !scrollerCommandParams.commandID) {
+                            if (!scrollerCommandParams || !scrollerCommandParams.ScrollerID || !scrollerCommandParams.CommandID) {
                                 throw "ScrollerID and CommandID properties must be defined";
                             }
                             var surl = ESWEBAPI_URL.__SCROLLER_COMMAND__;
 
-                            var tt = esGlobals.trackTimer("SCR", "COMMAND", scrollerCommandParams.ScrollerID .concat("/", scrollerCommandParams.commandID));
+                            var tt = esGlobals.trackTimer("SCR", "COMMAND", scrollerCommandParams.ScrollerID .concat("/", scrollerCommandParams.CommandID));
                             tt.startTime();
 
                             var ht = $http({
@@ -167,6 +168,30 @@
                                 tt.endTime().send();
                             });
                             return ht;
+                        }
+
+                        function execFormCommand(formCommandParams) {
+                        if (!formCommandParams || !formCommandParams.EntityID || !formCommandParams.CommandID) {
+                                throw "EntityID and CommandID properties must be defined";
+                            }
+                            var surl = ESWEBAPI_URL.__FORM_COMMAND__;
+
+                            var tt = esGlobals.trackTimer("FORM", "COMMAND", formCommandParams.EntityID .concat("/", formCommandParams.CommandID));
+                            tt.startTime();
+
+                            var ht = $http({
+                                method: 'post',
+                                headers: {
+                                    "Authorization": esGlobals.getWebApiToken()
+                                },
+                                url: surl,
+                                data: formCommandParams
+                            });
+
+                            ht.then(function() {
+                                tt.endTime().send();
+                            });
+                            return ht;   
                         }
 
                         function execScroller(apiUrl, groupID, filterID, params) {
@@ -369,8 +394,22 @@
 
                             },
 
-                            executeScrollerCommand: function(scrollerCommandParams) {
-                                return execScrollerCommand(scrollerCommandParams);
+                            executeFormCommand: function(formCommandParams) {
+                                return execFormCommand(formCommandParams);
+                            },
+
+                            executeFormCommandDS: function(entityID, commandID, commandParams, ds) {
+                                var params = {
+                                    EntityID: entityID,
+                                    CommandID: commandID,
+                                    CommandParams: commandParams
+                                };
+
+                                if (ds) {
+                                    params.EntityDataset = ds;
+                                }
+
+                                return execFormCommand(params);
                             },
 
                             executeScrollerCommandSRV: function(groupID, filterID, commandID, scrollerParams, commandParams) {
