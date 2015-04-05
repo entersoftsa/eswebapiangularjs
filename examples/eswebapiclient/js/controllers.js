@@ -4,8 +4,18 @@
 
 var eskbControllers = angular.module('eskbControllers', ['kendo.directives', 'es.Services.Social', 'underscore']);
 
-eskbControllers.controller('mainCtrl', ['$scope', '$rootScope', 'es.Services.WebApi', 'es.Services.Globals', '$location',
-    function($scope, $rootScope, esWebApiService, esGlobals, $location) {
+eskbControllers.controller('mainCtrl', ['$scope', '$rootScope', 'es.Services.WebApi', 'es.Services.Globals', '$location', 'es.Services.Messaging',
+    function($scope, $rootScope, esWebApiService, esGlobals, $location, esMessaging) {
+
+        $scope.currentUser = {};
+
+        esMessaging.subscribe("AUTH_CHANGED", function(session, tok) {
+            if (session && session.connectionModel) {
+                $scope.currentUser.Name = session.connectionModel.Name;
+            } else {
+                $scope.currentUser.Name = '';
+            }
+        });
 
         $scope.logout = function() {
             esWebApiService.logout();
