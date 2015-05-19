@@ -1,9 +1,63 @@
-<html>
+<!doctype html>
+<html lang="en" ng-app="smeApp">
 
-<body>
-    <p>
-        Hello World
-    </p>
+<head>
+    <meta charset="utf-8">
+    <title>Entersoft SME Samples</title>
+    <link rel="stylesheet" href="bower_components/bootstrap/dist/css/bootstrap.css">
+    <link rel="stylesheet" href="css/app.css">
+    <link rel="stylesheet" href="css/animations.css">
+    <!-- Custom styles for this template -->
+    <link href="telerik/styles/kendo.common.min.css" rel="stylesheet">
+    <link href="telerik/styles/kendo.rtl.min.css" rel="stylesheet">
+    <link href="telerik/styles/kendo.default.min.css" rel="stylesheet">
+    <link href="telerik/styles/kendo.dataviz.min.css" rel="stylesheet">
+    <link href="telerik/styles/kendo.dataviz.default.min.css" rel="stylesheet">
+</head>
+
+<body ng-controller="smeCtrl">
+	<div>
+		<h1 ng-cloak>
+			{{currentUser.Name}}
+		</h1>
+		<hr/>
+	</div>
+
+    <div>
+        <input type="text" ng-model="GroupID" class="form-control" placeholder="Entersoft Public Query Group ID" required autofocus>
+        <input type="text" ng-model="FilterID" class="form-control" placeholder="Entersoft Public Query Filter ID" required>
+        <button es-analytics-on es-analytics-category="hello stavros" class="btn btn-lg btn-primary btn-block" type="submit" ng-click="planB()">Execute</button>
+        <button es-analytics-on es-analytics-category="hello stavros" class="btn btn-lg btn-primary btn-block" type="submit" ng-click="planB(true)">ReBuild</button>
+    </div>
+
+    <hr>
+    <div class='container' ng-cloak>
+        <kendo-grid k-ng-delay="gridOptions" k-options="gridOptions" k-rebind="xCount" />
+    </div>
+    
+    <script src="bower_components/jquery/dist/jquery.min.js"></script>
+    <script src="bower_components/angular/angular.js"></script>
+    <script src="bower_components/angular-sanitize/angular-sanitize.js"></script>
+    <script src="bower_components/angular-route/angular-route.js"></script>
+    <script src="bower_components/ngStorage/ngstorage.min.js"></script>
+    <script src="bower_components/noty/js/noty/packaged/jquery.noty.packaged.min.js"></script>
+    <script src="bower_components/stacktrace-js/dist/stacktrace.js"></script>
+    <script src="bower_components/log4javascript/js/log4javascript.js"></script>
+    <script src="http://www.google-analytics.com/analytics.js"></script>
+    <script src="bower_components/underscore/underscore-min.js"></script>
+    <script src="bower_components/jscache/cache.js"></script>
+    <script src="../../src/esanalytics.js"></script>
+    <script src="../../src/eswebcore.js"></script>
+    <script src="../../src/eswebservices.js"></script>
+    <script src="../../src/eslog.js"></script>
+    <script src="../../src/esinit.js"></script>
+    <script src="../../src/esfacebook.js"></script>
+    <!-- 
+    <script src="../../dist/esframework.min.js"></script>
+ -->
+    <script src="telerik/js/kendo.all.min.js"></script>
+    <script src="smejs/app.js"></script>
+    <script src="smejs/controllers.js"></script>
 </body>
 
 </html>

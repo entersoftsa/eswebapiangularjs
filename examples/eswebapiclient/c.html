@@ -1,0 +1,104 @@
+<!doctype html>
+<html ng-app="researchApp">
+
+<head>
+    <meta charset="utf-8">
+    <title>Dynamically change Kendo grid columns.</title>
+    <link href="telerik/styles/kendo.common.min.css" rel="stylesheet" type="text/css" />
+    <link href="telerik/styles/kendo.silver.min.css" rel="stylesheet" type="text/css" />
+    <script src="bower_components/jquery/dist/jquery.min.js"></script>
+    <script src="bower_components/angular/angular.js"></script>
+    <script src="bower_components/angular-sanitize/angular-sanitize.js"></script>
+    <script src="bower_components/angular-route/angular-route.js"></script>
+    <script src="telerik/js/kendo.all.min.js"></script>
+</head>
+
+<body ng-controller="researchCtrl">
+    <button ng-click="execute1($event)">Execute 1</button>
+    <button ng-click="execute2($event)">Execute 2</button>
+    <!-- By supplying the string "grid" to the kendo-grid directive, the kendo grid will be made available
+
+ to the $scope as $scope.grid. -->
+    <!-- All initial configuration of the kendo grid is provided by the $scope.gridOptions. -->
+    <!-- The kendo grid will "refresh" / "rebind" itself, when the $scope.selectedType changes. -->
+    <div kendo-grid="grid" k-options="gridOptions" k-rebind="selectedType"></div>
+    <script>
+    // Main entry point of the application.
+    // Kendo - Angular needs the ["kendo.directives"] to be injected.
+    var researchApp = angular.module("researchApp", ["kendo.directives"]);
+    researchApp.controller('researchCtrl', function($scope) {
+        var GridModel1 = kendo.data.Model.define({
+            id: 'Id',
+            fields: {
+                company: {
+                    type: 'string'
+                },
+                os: {
+                    type: 'string'
+                }
+            }
+        });
+
+        var GridModel2 = kendo.data.Model.define({
+            id: 'Id',
+            fields: {
+                FirstName: {
+                    type: 'string'
+                },
+                LastName: {
+                    type: 'string'
+                },
+                Description: {
+                    type: 'string'
+                }
+            }
+        });
+
+        var gridOptions1 = {
+            dataSource: new kendo.data.DataSource({
+                data: new kendo.data.ObservableArray([
+                    new GridModel1({
+                        Id: 1,
+                        company: 'Apple',
+                        os: 'OSX'
+                    })
+                ]),
+                schema: {
+                    model: GridModel1
+                }
+            })
+        };
+
+        var gridOptions2 = {
+            dataSource: new kendo.data.DataSource({
+                data: new kendo.data.ObservableArray([
+                    new GridModel2({
+                        Id: 1,
+                        FirstName: 'John',
+                        LastName: 'Do',
+                        Description: "My test description."
+                    })
+                ]),
+                schema: {
+                    model: GridModel2
+                }
+            })
+        };
+
+        // Selected type is used to rebind the kendo ui grid.
+        $scope.selectedType = "";
+        //$scope.gridOptions = gridOptions1;
+        $scope.execute1 = function(e) {
+            // Switch 
+            $scope.gridOptions = gridOptions1;
+            $scope.selectedType = "Software";
+        };
+        $scope.execute2 = function(e) {
+            $scope.gridOptions = gridOptions2;
+            $scope.selectedType = "Employee";
+        };
+    });
+    </script>
+</body>
+
+</html>

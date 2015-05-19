@@ -98,12 +98,16 @@ eskbControllers.controller('scrollerCtrl', ['$scope', '$log', '$http', 'es.Servi
 
         $scope.GroupID = "ESTMTask";
         $scope.FilterID = "RequestsToBeApproved";
-        $scope.PQResults = {};
+        $scope.PQResults = { };
         $scope.gridOptions = {};
         $scope.ChartData = {};
+        $scope.dataSource = null;
 
         $scope.onSeriesClick = function(e) {
-            alert("Name = " + e.series.name + "Value = " + e.value);
+            // alert("Name = " + e.series.name + "Value = " + e.value);
+            $scope.dataSource.fetch(function() {
+                console.log($scope.dataSource.length);
+            });
         }
 
         $scope.executePQ = function() {
@@ -134,10 +138,11 @@ eskbControllers.controller('scrollerCtrl', ['$scope', '$log', '$http', 'es.Servi
                         priority: Cache.Priority.HIGH
                     });
 
-                    $log.info('PublicQuery OK! ' + Object.keys(pq).length);
-                    for (var key in pq) {
-                        $log.info('  ' + key + ' -> ' + pq[key].length);
-                    }
+                    $scope.dataSource = new kendo.data.DataSource({
+                        data: pq.Rows
+                    });
+
+                    $log.info('PublicQuery OK! ' + pq.Rows.length);
                 })
                 .error(function(rejection) {
                     $scope.PQResults = {};
@@ -167,6 +172,9 @@ eskbControllers.controller('scrollerCtrl', ['$scope', '$log', '$http', 'es.Servi
 
         $scope.getColumnDefinitions = function(dt) {
             var kendocols = [];
+            if (!dt) {
+                return kendocols;
+            }
 
             var dtCols = Object.keys(dt[0]);
             var mx = Math.min(5, dtCols.length);
