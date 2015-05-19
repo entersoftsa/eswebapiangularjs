@@ -34,6 +34,7 @@ function prepareWebScroller(esWebApiService, $log, GroupID, FilterID, params, es
                     .success(function(pq) {
                         // SME CHANGE THIS ONCE WE HAVE CORRECT PQ
                         if (Object.keys(options.data).length) {
+                            $log.info  ("Page ", options.data.page, " PageSize ", options.data.pageSize, " Skip ", options.data.skip, " Take ", options.data.take);
                             pq.Count = 136;
                             pq.Rows = pq.Rows.slice(options.data.skip, options.data.skip + options.data.pageSize);
                         }
@@ -98,36 +99,22 @@ smeControllers.controller('smeCtrl', ['$scope', '$log', 'es.Services.WebApi', '_
                 });
             });
 
-        function convertValues(value) {
-            var data = {};
-
-            value = $.isArray(value) ? value : [value];
-
-            for (var idx = 0; idx < value.length; idx++) {
-                data["values[" + idx + "]"] = value[idx];
-            }
-
-            return data;
-        }
-
         var kdsoptions = {
             serverFiltering: true,
             serverPaging: true,
             pageSize: 15
         };
-        $scope.comboDS = prepareWebScroller(esWebApiService, $log, $scope.GroupID, $scope.FilterID, {}, kdsoptions);
 
         $scope.comboOptions = {
+            template: '<span class="order-id">#= Code #</span>-- #= RequestDate #, #= RequestNature #',
             placeholder: "Select a Task",
             autoBind: false,
             dataTextField: "Code",
             dataValueField: "GID",
             virtual: {
-                itemHeight: 26,
-                valueMapper: function(options) {
-                    options.success(options.value);
-                }
+                itemHeight: 26
             },
+            dataSource: prepareWebScroller(esWebApiService, $log, $scope.GroupID, $scope.FilterID, {}, kdsoptions),
             height: 220
         };
 
