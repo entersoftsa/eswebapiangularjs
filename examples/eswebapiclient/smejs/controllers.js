@@ -10,7 +10,7 @@ function calcCols(cols, data) {
         return cols;
     }
 
-    var NumCols = Math.floor((Math.random() * 10) + 1); 
+    var NumCols = Math.floor((Math.random() * 10) + 1);
 
     var kendoCols = [];
     var dtCols = Object.keys(data[0]);
@@ -27,14 +27,17 @@ function calcCols(cols, data) {
 }
 
 function prepareWebScroller(esWebApiService, $log, GroupID, FilterID, params, esOptions) {
-    var ds = new kendo.data.DataSource({
+    var xParam = {
         transport: {
             read: function(options) {
-                esWebApiService.fetchPublicQuery(GroupID, FilterID, {})
+                esWebApiService.fetchPublicQuery(GroupID, FilterID, params)
                     .success(function(pq) {
                         // SME CHANGE THIS ONCE WE HAVE CORRECT PQ
-                        pq.Count = 27;
-                        pq.Rows = pq.Rows.slice(options.data.skip, options.data.skip + options.data.pageSize);
+                        if (Object.keys(options.data).length) {
+                            pq.Count = 136;
+                            pq.Rows = pq.Rows.slice(options.data.skip, options.data.skip + options.data.pageSize);
+                        }
+
                         // END tackling
 
                         options.success(pq);
@@ -45,11 +48,14 @@ function prepareWebScroller(esWebApiService, $log, GroupID, FilterID, params, es
         schema: {
             data: "Rows",
             total: "Count"
-        },
-        serverPaging: true,
-        pageSize: 5
-    });
+        }
+    };
 
+    if (esOptions) {
+        angular.extend(xParam, esOptions);
+    }
+
+    var ds = new kendo.data.DataSource(xParam);
     return ds;
 }
 
@@ -92,14 +98,46 @@ smeControllers.controller('smeCtrl', ['$scope', '$log', 'es.Services.WebApi', '_
                 });
             });
 
+        function convertValues(value) {
+            var data = {};
+
+            value = $.isArray(value) ? value : [value];
+
+            for (var idx = 0; idx < value.length; idx++) {
+                data["values[" + idx + "]"] = value[idx];
+            }
+
+            return data;
+        }
+
+        var kdsoptions = {
+            serverFiltering: true,
+            serverPaging: true,
+            pageSize: 15
+        };
+        $scope.comboDS = prepareWebScroller(esWebApiService, $log, $scope.GroupID, $scope.FilterID, {}, kdsoptions);
+
+        $scope.comboOptions = {
+            placeholder: "Select a Task",
+            autoBind: false,
+            dataTextField: "Code",
+            dataValueField: "GID",
+            virtual: {
+                itemHeight: 26,
+                valueMapper: function(options) {
+                    options.success(options.value);
+                }
+            },
+            height: 220
+        };
+
 
         $scope.planB = function(reBuild) {
 
             if (!reBuild) {
                 if (!$scope.gridOptions || !$scope.gridOptions.dataSource) {
                     reBuild = true;
-                }
-                else {
+                } else {
                     $scope.gridOptions.dataSource.read();
                     $log.info("Requery");
                     return;
@@ -114,7 +152,13 @@ smeControllers.controller('smeCtrl', ['$scope', '$log', 'es.Services.WebApi', '_
             esWebApiService.fetchPublicQuery($scope.GroupID, $scope.FilterID, {})
                 .success(function(pq) {
                     grdopt.columns = calcCols(grdopt.columns, pq.Rows);
-                    grdopt.dataSource = prepareWebScroller(esWebApiService, $log, $scope.GroupID, $scope.FilterID);
+
+                    var kdsoptions = {
+                        serverPaging: true,
+                        pageSize: 10,
+                        serverFiltering: false
+                    };
+                    grdopt.dataSource = prepareWebScroller(esWebApiService, $log, $scope.GroupID, $scope.FilterID, {}, kdsoptions);
 
                     $scope.gridOptions = grdopt;
                     if (reBuild) {

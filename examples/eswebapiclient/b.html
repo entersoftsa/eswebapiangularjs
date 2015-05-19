@@ -31,6 +31,15 @@
     </div>
 
     <hr>
+
+     <div class="boxc-col">
+        <h4>Remote data</h4>
+        <label>Product:</label>
+        <input kendo-combo-box k-options="comboOptions" k-data-source="comboDS">
+        </input>
+
+    </div>
+
     <div class='container' ng-cloak>
         <kendo-grid k-ng-delay="gridOptions" k-options="gridOptions" k-rebind="xCount" />
     </div>
