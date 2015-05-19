@@ -30,6 +30,9 @@ function prepareWebScroller(esWebApiService, $log, GroupID, FilterID, params, es
     var xParam = {
         transport: {
             read: function(options) {
+                if (options.data.filter) {
+                    $log.info  ("Filtered data ", JSON.stringify(options.data.filter));
+                }
                 esWebApiService.fetchPublicQuery(GroupID, FilterID, params)
                     .success(function(pq) {
                         // SME CHANGE THIS ONCE WE HAVE CORRECT PQ
@@ -109,6 +112,8 @@ smeControllers.controller('smeCtrl', ['$scope', '$log', 'es.Services.WebApi', '_
             template: '<span class="order-id">#= Code #</span>-- #= RequestDate #, #= RequestNature #',
             placeholder: "Select a Task",
             autoBind: false,
+            filter: "contains",
+            minLength: 3,
             dataTextField: "Code",
             dataValueField: "GID",
             virtual: {
