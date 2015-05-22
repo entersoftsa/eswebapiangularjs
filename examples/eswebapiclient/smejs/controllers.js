@@ -30,20 +30,38 @@ function prepareWebScroller(esWebApiService, $log, GroupID, FilterID, params, es
     var xParam = {
         transport: {
             read: function(options) {
-                if (options.data.filter) {
-                    $log.info  ("Filtered data ", JSON.stringify(options.data.filter));
-                }
+
+                $log.info("*** SERVER EXECUTION *** ", JSON.stringify(options));
+
                 esWebApiService.fetchPublicQuery(GroupID, FilterID, params)
                     .success(function(pq) {
                         // SME CHANGE THIS ONCE WE HAVE CORRECT PQ
+
+
+                        if (options.data && options.data.filter && options.data.filter.filters && options.data.filter.filters.length) {
+                            $log.info("ES Filtering on ", options.data.filter.filters[0].value);
+
+                            var vVal = options.data.filter.filters[0].value;
+                            pq.Rows = _.filter(pq.Rows, function(gItem) {
+                                return gItem.Code.indexOf(vVal) > -1;
+                            }) || [];
+                        }
+
+                        if (pq.Count == -1) {
+                            pq.Count = pq.Rows ? pq.Rows.length : 0;
+                        }
+                        pq.Rows = _.sortBy(pq.Rows, 'Code');
+
                         if (Object.keys(options.data).length) {
-                            $log.info  ("Page ", options.data.page, " PageSize ", options.data.pageSize, " Skip ", options.data.skip, " Take ", options.data.take);
-                            pq.Count = 136;
+                            $log.info("Page ", options.data.page, " PageSize ", options.data.pageSize, " Skip ", options.data.skip, " Take ", options.data.take);
                             pq.Rows = pq.Rows.slice(options.data.skip, options.data.skip + options.data.pageSize);
                         }
 
                         // END tackling
 
+                        for (var i = 0; i < pq.Rows.length; i++) {
+                            $log.info(i, " ==> ", pq.Rows[i]["Code"]);
+                        }
                         options.success(pq);
                         $log.info("Executed");
                     });
@@ -102,10 +120,13 @@ smeControllers.controller('smeCtrl', ['$scope', '$log', 'es.Services.WebApi', '_
                 });
             });
 
+        $scope.taskToSel = "2b995a10-a835-4148-b222-e4c67ec21b75";
+        $scope.textToSel = "GenReq-00694";
+
         var kdsoptions = {
             serverFiltering: true,
             serverPaging: true,
-            pageSize: 15
+            pageSize: 50
         };
 
         $scope.comboOptions = {
@@ -113,19 +134,47 @@ smeControllers.controller('smeCtrl', ['$scope', '$log', 'es.Services.WebApi', '_
             placeholder: "Select a Task",
             autoBind: false,
             filter: "contains",
+            ignoreCase: false,
             minLength: 3,
             dataTextField: "Code",
             dataValueField: "GID",
+
             virtual: {
-                itemHeight: 26
+                itemHeight: 26,
+                valueMapper: function(options) {
+                    $log.info("options ", JSON.stringify(options));
+                    //Execute the same scroller with equal param to locate a single record 
+                    esWebApiService.fetchPublicQuery($scope.GroupID, $scope.FilterID, {})
+                        .success(function(pq) {
+                            // SME CHANGE THIS ONCE WE HAVE CORRECT PQ
+                            if (pq.Count == -1) {
+                                pq.Count = pq.Rows ? pq.Rows.length : 0;
+                            }
+                            // END tackling
+
+                            var iRet = _.findWhere(pq.Rows, {
+                                GID: options.value
+                            });
+                            if (iRet) {
+                                pq.Rows = [iRet];
+                                var ind = 62;
+                                options.success([ind]);
+                                $log.info("LOOKUP INDEX");
+                                return;
+                            } else {
+                                options.success([]);
+                            }
+
+                        });
+                }
             },
+
             dataSource: prepareWebScroller(esWebApiService, $log, $scope.GroupID, $scope.FilterID, {}, kdsoptions),
             height: 220
         };
 
 
         $scope.planB = function(reBuild) {
-
             if (!reBuild) {
                 if (!$scope.gridOptions || !$scope.gridOptions.dataSource) {
                     reBuild = true;
@@ -137,8 +186,12 @@ smeControllers.controller('smeCtrl', ['$scope', '$log', 'es.Services.WebApi', '_
             }
 
             var grdopt = {
-                pageable: true,
-                sortable: true
+                //pageable: true,
+                sortable: true,
+                filterable: true,
+                scrollable: {
+                    virtual: true
+                },
             };
 
             esWebApiService.fetchPublicQuery($scope.GroupID, $scope.FilterID, {})
@@ -147,8 +200,10 @@ smeControllers.controller('smeCtrl', ['$scope', '$log', 'es.Services.WebApi', '_
 
                     var kdsoptions = {
                         serverPaging: true,
+                        serverFiltering: false,
+                        serverSorting: false,
                         pageSize: 10,
-                        serverFiltering: false
+
                     };
                     grdopt.dataSource = prepareWebScroller(esWebApiService, $log, $scope.GroupID, $scope.FilterID, {}, kdsoptions);
 

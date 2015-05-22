@@ -1,5 +1,5 @@
 /*
-* Kendo UI v2015.1.429 (http://www.telerik.com/kendo-ui)
+* Kendo UI v2015.1.521 (http://www.telerik.com/kendo-ui)
 * Copyright 2015 Telerik AD. All rights reserved.
 *
 * Kendo UI commercial licenses may be obtained at
@@ -327,14 +327,16 @@
 
 /* Pager */
 
-.k-rtl .k-pager-info
+.k-rtl .k-pager-info,
+.k-rtl .k-pager-wrap .k-pager-refresh
 {
     float: left;
 }
 
 .k-rtl .k-pager-wrap > .k-link,
 .k-rtl .k-pager-wrap .k-pager-numbers,
-.k-rtl .k-pager-numbers li
+.k-rtl .k-pager-numbers li,
+.k-rtl .k-pager-input
 {
     float: right;
 }
@@ -455,7 +457,8 @@
 {
     margin-left: 0;
     margin-right: 20px;
-}
+}
+
 /* Menu */
 
 .k-rtl .k-menu .k-item,

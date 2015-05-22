@@ -4,46 +4,132 @@
 <head>
     <meta charset="utf-8">
     <title>Entersoft SME Samples</title>
+
+
     <link rel="stylesheet" href="bower_components/bootstrap/dist/css/bootstrap.css">
     <link rel="stylesheet" href="css/app.css">
     <link rel="stylesheet" href="css/animations.css">
-    <!-- Custom styles for this template -->
-    <link href="telerik/styles/kendo.common.min.css" rel="stylesheet">
-    <link href="telerik/styles/kendo.rtl.min.css" rel="stylesheet">
-    <link href="telerik/styles/kendo.default.min.css" rel="stylesheet">
-    <link href="telerik/styles/kendo.dataviz.min.css" rel="stylesheet">
-    <link href="telerik/styles/kendo.dataviz.default.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="http://cdn.kendostatic.com/2015.1.429/styles/kendo.common-material.min.css" />
+    <link rel="stylesheet" href="http://cdn.kendostatic.com/2015.1.429/styles/kendo.material.min.css" />
+    <link rel="stylesheet" href="http://cdn.kendostatic.com/2015.1.429/styles/kendo.dataviz.min.css" />
+    <link rel="stylesheet" href="http://cdn.kendostatic.com/2015.1.429/styles/kendo.dataviz.material.min.css" />
+
+    
 </head>
 
 <body ng-controller="smeCtrl">
-	<div>
-		<h1 ng-cloak>
-			{{currentUser.Name}}
-		</h1>
-		<hr/>
-	</div>
-
+    <div>
+        <h1 ng-cloak>
+            {{currentUser.Name}}
+        </h1>
+        <hr/>
+    </div>
     <div>
         <input type="text" ng-model="GroupID" class="form-control" placeholder="Entersoft Public Query Group ID" required autofocus>
         <input type="text" ng-model="FilterID" class="form-control" placeholder="Entersoft Public Query Filter ID" required>
-        <button es-analytics-on es-analytics-category="hello stavros" class="btn btn-lg btn-primary btn-block" type="submit" ng-click="planB()">Execute</button>
-        <button es-analytics-on es-analytics-category="hello stavros" class="btn btn-lg btn-primary btn-block" type="submit" ng-click="planB(true)">ReBuild</button>
+        <div>
+            <button es-analytics-on es-analytics-category="hello stavros" type="submit" ng-click="planB()">Execute</button>
+            <button es-analytics-on es-analytics-category="hello stavros" type="submit" ng-click="planB(true)">ReBuild</button>
+            <button es-analytics-on es-analytics-category="hello stavros" type="submit" ng-click="listView()">LISTVIEW</button>
+        </div>
     </div>
-
-    <hr>
-
-     <div class="boxc-col">
-        <h4>Remote data</h4>
+    <hr/>
+    <div class="boxc-col">
+        <h4>Selected Record GID is {{taskToSel}} </h4>
         <label>Product:</label>
-        <input kendo-combo-box k-options="comboOptions" style="width: 400px">
-        </input>
-
+        <select kendo-combo-box="mCombo" k-options="comboOptions" style="width: 400px" ng-model="taskToSel">
+        </select>
     </div>
+    <!--
+    <div class="boxc-col">
+        <h4>DropDown data is {{taskToSel}} </h4>
+        <label>Product:</label>
+        <select kendo-drop-down-list k-options="comboOptions" style="width: 400px" ng-model="taskToSel">
+        </select>
+    </div>
+-->
+    <div class="demo-section">
+        <div kendo-list-view id="listView" k-ng-delay="gridOptions" k-data-source="gridOptions.dataSource">
+            <div class="product" k-template>
+                <img ng-src="http://assets.goldenbrands.gr/images/full/5028101154_1.jpg" alt=" {{Description}} image" />
+                <h3>{{dataItem.Code}}</h3>
+            </div>
+        </div>
+        <div kendo-pager k-ng-delay="gridOptions" k-data-source="gridOptions.dataSource"></div>
+        <script type="text/x-kendo-angular-template" id="template">
+        </script>
+    </div>
+
+    <style>
+        .demo-section {
+            width: 860px;
+            margin: 20px auto;
+            border: 0;
+            background: none;
+        }
+        #listView {
+            padding: 10px 5px;
+            margin-bottom: -1px;
+            min-height: 510px;
+        }
+        .product {
+            float: left;
+            position: relative;
+            width: 111px;
+            height: 170px;
+            margin: 0 5px;
+            padding: 0;
+        }
+        .product img {
+            width: 110px;
+            height: 110px;
+        }
+        .product h3 {
+            margin: 0;
+            padding: 3px 5px 0 0;
+            max-width: 96px;
+            overflow: hidden;
+            line-height: 1.1em;
+            font-size: .9em;
+            font-weight: normal;
+            text-transform: uppercase;
+            color: #999;
+        }
+        .product p {
+            visibility: hidden;
+        }
+        .product:hover p {
+            visibility: visible;
+            position: absolute;
+            width: 110px;
+            height: 110px;
+            top: 0;
+            margin: 0;
+            padding: 0;
+            line-height: 110px;
+            vertical-align: middle;
+            text-align: center;
+            color: #fff;
+            background-color: rgba(0,0,0,0.75);
+            transition: background .2s linear, color .2s linear;
+            -moz-transition: background .2s linear, color .2s linear;
+            -webkit-transition: background .2s linear, color .2s linear;
+            -o-transition: background .2s linear, color .2s linear;
+        }
+        .k-listview:after {
+            content: ".";
+            display: block;
+            height: 0;
+            clear: both;
+            visibility: hidden;
+        }
+</style>
+
+
 
     <div class='container' ng-cloak>
-        <kendo-grid k-ng-delay="gridOptions" k-options="gridOptions" k-rebind="xCount" />
+        <div kendo-grid k-ng-delay="gridOptions" k-options="gridOptions" k-rebind="xCount" />
     </div>
-    
     <script src="bower_components/jquery/dist/jquery.min.js"></script>
     <script src="bower_components/angular/angular.js"></script>
     <script src="bower_components/angular-sanitize/angular-sanitize.js"></script>
