@@ -218,3 +218,95 @@ smeControllers.controller('smeCtrl', ['$scope', '$log', 'es.Services.WebApi', '_
         }
     }
 ]);
+
+
+smeControllers.controller('cubeCtrl', ['$scope', '$log', 'es.Services.WebApi', '_', 'es.Services.Cache', 'es.Services.Messaging',
+    function($scope, $log, esWebApiService, _, cache, esMessaging) {
+
+        $scope.currentUser = {};
+        $scope.credentials = {
+            UserID: 'sme',
+            Password: '1234',
+            BranchID: 'ΑΘΗ',
+            LangID: 'el-GR'
+        };
+
+        $scope.GroupID = "ESTMTask";
+        $scope.FilterID = "RequestsToBeApproved";
+
+        esMessaging.subscribe("AUTH_CHANGED", function(session, tok) {
+            if (session && session.connectionModel) {
+                $scope.currentUser.Name = session.connectionModel.Name;
+            } else {
+                $scope.currentUser.Name = 'NOT Approved';
+            }
+        });
+
+        esWebApiService.openSession($scope.credentials)
+            .success(function($user, status, headers, config) {
+                console.log("Logged in. Ready to proceed");
+            })
+            .error(function(rejection) {
+                var msg = rejection ? rejection.UserMessage : "Generic server error";
+                noty({
+                    text: msg,
+                    type: 'error',
+                    timeout: 3000,
+                    killer: true
+                });
+            });
+
+
+        $scope.planB = function() {
+            esWebApiService.fetchPublicQuery($scope.GroupID, $scope.FilterID, {})
+                .success(function(pq) {
+                    var ds = {
+                        data: pq.Rows,
+                        schema: {
+                            cube: {
+                                dimensions: {
+                                    RequestCategory: {
+                                        caption: "All Categories"
+                                    },
+                                    Priority: {
+                                        caption: "Priority"
+                                    }
+                                },
+                                measures: {
+                                    "Sum": {
+                                        field: "RequestAmount",
+                                        format: "{0:c}",
+                                        aggregate: "sum"
+                                    },
+                                    "Average": {
+                                        field: "RequestAmount",
+                                        format: "{0:c}",
+                                        aggregate: "average"
+                                    }
+                                }
+                            }
+                        },
+                        columns: [{
+                            name: "RequestCategory",
+                            expand: true
+                        }],
+                        rows: [{
+                            name: "Piority",
+                            expand: true
+                        }],
+                        measures: ["Sum"]
+                    };
+
+                    var grdopt = {
+                        columnWidth: 200,
+                        height: 580,
+                        dataSource: ds
+                    };
+
+                    $scope.cubeOptions = grdopt;
+                });
+
+        }
+
+    }
+]);
