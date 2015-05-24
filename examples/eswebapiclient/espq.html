@@ -4,16 +4,20 @@
 <head>
     <meta charset="utf-8">
     <title>Entersoft SME Samples</title>
+
     <link rel="stylesheet" href="bower_components/bootstrap/dist/css/bootstrap.css">
     <link rel="stylesheet" href="css/app.css">
     <link rel="stylesheet" href="css/animations.css">
+
     <link rel="stylesheet" href="http://cdn.kendostatic.com/2015.1.429/styles/kendo.common-material.min.css" />
     <link rel="stylesheet" href="http://cdn.kendostatic.com/2015.1.429/styles/kendo.material.min.css" />
     <link rel="stylesheet" href="http://cdn.kendostatic.com/2015.1.429/styles/kendo.dataviz.min.css" />
     <link rel="stylesheet" href="http://cdn.kendostatic.com/2015.1.429/styles/kendo.dataviz.material.min.css" />
+
+    
 </head>
 
-<body ng-controller="cubeCtrl">
+<body ng-controller="esPQCtrl">
     <div>
         <h1 ng-cloak>
             {{currentUser.Name}}
@@ -23,15 +27,16 @@
     <div>
         <input type="text" ng-model="GroupID" class="form-control" placeholder="Entersoft Public Query Group ID" required autofocus>
         <input type="text" ng-model="FilterID" class="form-control" placeholder="Entersoft Public Query Filter ID" required>
+        <input type="text" ng-model="Code" class="form-control" placeholder="Code">
+        <input kendo-numeric-text-box k-ng-model="OppRevenue" culture="el-GR" format="n" spinners="false" />
         <div>
-            <button es-analytics-on es-analytics-category="hello stavros" type="submit" ng-click="planD()">Execute</button>
+            <button es-analytics-on es-analytics-category="hello stavros" type="submit" ng-click="planB()">Execute</button>
+            <button es-analytics-on es-analytics-category="hello stavros" type="submit" ng-click="planB(true)">ReBuild</button>
         </div>
     </div>
-    <div id="example">
-        <div ng-app="KendoDemo">
-            <div kendo-pivot-configurator k-height="580" k-ng-delay="cubeOptions" k-data-source="cubeOptions.dataSource" id="configurator"></div>
-            <div kendo-pivot-grid k-ng-delay="cubeOptions" k-options="cubeOptions" id="pivotgrid"></div>
-        </div>
+
+    <div class='container' ng-cloak>
+        <div kendo-grid k-ng-delay="gridOptions" k-options="gridOptions" k-rebind="xCount" />
     </div>
 
 
@@ -51,12 +56,13 @@
     <script src="../../src/eswebservices.js"></script>
     <script src="../../src/eslog.js"></script>
     <script src="../../src/esinit.js"></script>
+    
     <!-- 
     <script src="../../dist/esframework.min.js"></script>
  -->
     <script src="telerik/js/kendo.all.min.js"></script>
     <script src="smejs/app.js"></script>
-    <script src="smejs/controllers.js"></script>
+    <script src="smejs/espqcontroller.js"></script>
 </body>
 
 </html>

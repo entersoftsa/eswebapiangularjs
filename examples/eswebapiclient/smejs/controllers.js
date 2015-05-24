@@ -26,7 +26,7 @@ function calcCols(cols, data) {
     return kendoCols;
 }
 
-function prepareWebScroller(esWebApiService, $log, GroupID, FilterID, params, esOptions) {
+function prepareWebScroller(dsType, esWebApiService, $log, GroupID, FilterID, params, esOptions) {
     var xParam = {
         transport: {
             read: function(options) {
@@ -50,9 +50,10 @@ function prepareWebScroller(esWebApiService, $log, GroupID, FilterID, params, es
                         if (pq.Count == -1) {
                             pq.Count = pq.Rows ? pq.Rows.length : 0;
                         }
+
                         pq.Rows = _.sortBy(pq.Rows, 'Code');
 
-                        if (Object.keys(options.data).length) {
+                        if (options.data && options.data.pageSize) {
                             $log.info("Page ", options.data.page, " PageSize ", options.data.pageSize, " Skip ", options.data.skip, " Take ", options.data.take);
                             pq.Rows = pq.Rows.slice(options.data.skip, options.data.skip + options.data.pageSize);
                         }
@@ -77,8 +78,11 @@ function prepareWebScroller(esWebApiService, $log, GroupID, FilterID, params, es
         angular.extend(xParam, esOptions);
     }
 
-    var ds = new kendo.data.DataSource(xParam);
-    return ds;
+    if (dsType && dsType === "pivot") {
+        return new kendo.data.PivotDataSource(xParam);
+    } else {
+        return new kendo.data.DataSource(xParam);
+    }
 }
 
 smeControllers.controller('smeCtrl', ['$scope', '$log', 'es.Services.WebApi', '_', 'es.Services.Cache', 'es.Services.Messaging',
@@ -169,7 +173,7 @@ smeControllers.controller('smeCtrl', ['$scope', '$log', 'es.Services.WebApi', '_
                 }
             },
 
-            dataSource: prepareWebScroller(esWebApiService, $log, $scope.GroupID, $scope.FilterID, {}, kdsoptions),
+            dataSource: prepareWebScroller(null, esWebApiService, $log, $scope.GroupID, $scope.FilterID, {}, kdsoptions),
             height: 220
         };
 
@@ -205,7 +209,7 @@ smeControllers.controller('smeCtrl', ['$scope', '$log', 'es.Services.WebApi', '_
                         pageSize: 10,
 
                     };
-                    grdopt.dataSource = prepareWebScroller(esWebApiService, $log, $scope.GroupID, $scope.FilterID, {}, kdsoptions);
+                    grdopt.dataSource = prepareWebScroller(null, esWebApiService, $log, $scope.GroupID, $scope.FilterID, {}, kdsoptions);
 
                     $scope.gridOptions = grdopt;
                     if (reBuild) {
@@ -256,56 +260,56 @@ smeControllers.controller('cubeCtrl', ['$scope', '$log', 'es.Services.WebApi', '
                 });
             });
 
+ 
+        $scope.planD = function() {
 
-        $scope.planB = function() {
-            esWebApiService.fetchPublicQuery($scope.GroupID, $scope.FilterID, {})
-                .success(function(pq) {
-                    var ds = {
-                        data: pq.Rows,
-                        schema: {
-                            cube: {
-                                dimensions: {
-                                    RequestCategory: {
-                                        caption: "All Categories"
-                                    },
-                                    Priority: {
-                                        caption: "Priority"
-                                    }
-                                },
-                                measures: {
-                                    "Sum": {
-                                        field: "RequestAmount",
-                                        format: "{0:c}",
-                                        aggregate: "sum"
-                                    },
-                                    "Average": {
-                                        field: "RequestAmount",
-                                        format: "{0:c}",
-                                        aggregate: "average"
-                                    }
-                                }
+            var dsOptions = {
+                schema: {
+                    data: "Rows",
+                    total: "Count",
+                    cube: {
+                        dimensions: {
+                            RequestCategory: {
+                                caption: "All Categories"
+                            },
+                            Priority: {
+                                caption: "Priority"
                             }
                         },
-                        columns: [{
-                            name: "RequestCategory",
-                            expand: true
-                        }],
-                        rows: [{
-                            name: "Piority",
-                            expand: true
-                        }],
-                        measures: ["Sum"]
-                    };
+                        measures: {
+                            "Sum": {
+                                field: "RequestAmount",
+                                format: "{0:c}",
+                                aggregate: "sum"
+                            },
+                            "Average": {
+                                field: "RequestAmount",
+                                format: "{0:c}",
+                                aggregate: "average"
+                            }
+                        }
+                    }
+                },
+                columns: [{
+                    name: "RequestCategory",
+                    expand: true
+                }],
+                rows: [{
+                    name: "Priority",
+                    expand: true
+                }],
+                measures: ["Sum"]
+            };
 
-                    var grdopt = {
-                        columnWidth: 200,
-                        height: 580,
-                        dataSource: ds
-                    };
+            var ds = prepareWebScroller("pivot", esWebApiService, $log, $scope.GroupID, $scope.FilterID, {}, dsOptions);
 
-                    $scope.cubeOptions = grdopt;
-                });
+            var grdopt = {
+                columnWidth: 200,
+                height: 580,
+                dataSource: ds
+            };
 
+            $scope.cubeOptions = grdopt;
         }
 
     }
