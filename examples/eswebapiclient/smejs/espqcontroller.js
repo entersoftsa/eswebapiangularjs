@@ -4,26 +4,39 @@
 
 var smeControllers = angular.module('smeControllers', ['kendo.directives', 'underscore']);
 
-function calcCols(cols, data) {
 
-    if ((cols && cols.length > 0) || !data) {
-        return cols;
+function jColToTCol(jCol) {
+    var tCol = {
+        field: jCol.ColName,
+        title: jCol.Caption
+    };
+
+    if (jCol.TextAlignment == "3") {
+        tCol.attributes = { 
+            style: "text-align: right;"
+        };
     }
 
-    var NumCols = Math.floor((Math.random() * 10) + 1);
-
-    var kendoCols = [];
-    var dtCols = Object.keys(data[0]);
-    var mx = Math.min(NumCols, dtCols.length);
-    var index;
-
-    for (index = 0; index < mx; index++) {
-        kendoCols.push({
-            field: dtCols[index],
-            title: dtCols[index]
-        });
+    if (jCol.FormatString && jCol.FormatString != "") {
+        tCol.format = "{0:" + jCol.FormatString + "}";
     }
-    return kendoCols;
+    return tCol;
+}
+
+function convertJanusToTelerik(gridexInfo) {
+    if (!gridexInfo || !gridexInfo.LayoutColumn) {
+        return null;
+    }
+
+    var z = _.sortBy(_.where(gridexInfo.LayoutColumn, {
+        Visible: "true"
+    }), function(x) {
+        return parseInt(x.AA);
+    });
+    var z2 = _.map(z, function(x) {
+        return jColToTCol(x);
+    });
+    return z2;
 }
 
 function prepareWebScroller(dsType, esWebApiService, $log, espqParams, esOptions) {
@@ -34,8 +47,18 @@ function prepareWebScroller(dsType, esWebApiService, $log, espqParams, esOptions
                 $log.info("*** SERVER EXECUTION *** ", JSON.stringify(options));
 
                 var qParams = angular.isFunction(espqParams) ? espqParams() : espqParams;
+                $log.info("*** SERVER PARAMS *** ", JSON.stringify(qParams));
 
-                esWebApiService.fetchPublicQuery(qParams.GroupID, qParams.FilterID, qParams.Params)
+                var pqOptions = {
+                    WithCount: true
+                };
+
+                if (options.data && options.data.page && options.data.pageSize) {
+                    pqOptions.Page = options.data.page;
+                    pqOptions.PageSize = options.data.pageSize
+                }
+
+                esWebApiService.fetchPublicQuery(qParams.GroupID, qParams.FilterID, pqOptions, qParams.Params)
                     .success(function(pq) {
                         // SME CHANGE THIS ONCE WE HAVE CORRECT PQ
 
@@ -52,23 +75,14 @@ function prepareWebScroller(dsType, esWebApiService, $log, espqParams, esOptions
                             pq.Count = pq.Rows ? pq.Rows.length : 0;
                         }
 
-                        pq.Rows = _.sortBy(pq.Rows, 'Code');
-
-                        if (options.data && options.data.pageSize) {
-                            $log.info("Page ", options.data.page, " PageSize ", options.data.pageSize, " Skip ", options.data.skip, " Take ", options.data.take);
-                            pq.Rows = pq.Rows.slice(options.data.skip, options.data.skip + options.data.pageSize);
-                        }
+                        // pq.Rows = _.sortBy(pq.Rows, 'Code');
 
                         // END tackling
 
-                        for (var i = 0; i < pq.Rows.length; i++) {
-                            $log.info(i, " ==> ", pq.Rows[i]["Code"]);
-                        }
                         options.success(pq);
                         $log.info("Executed");
                     })
-                    .error(function (err) 
-                    {
+                    .error(function(err) {
                         options.error(err);
                     });
             }
@@ -132,9 +146,17 @@ smeControllers.controller('esPQCtrl', ['$scope', '$log', 'es.Services.WebApi', '
             });
 
 
+        $scope.getPQInfo = function() {
+            esWebApiService.fetchPublicQueryInfo($scope.GroupID, $scope.FilterID)
+                .success(function(ret) {
+                    $scope.pqInfo = JSON.stringify(ret);
+                });
+        }
+
+
         $scope.planB = function(reBuild) {
             if (!reBuild) {
-                if (!$scope.gridOptions || !$scope.gridOptions.dataSource) {
+                if (!$scope.gridOptions || !$scope.gridOptions.columns) {
                     reBuild = true;
                 } else {
                     $scope.gridOptions.dataSource.read();
@@ -143,37 +165,42 @@ smeControllers.controller('esPQCtrl', ['$scope', '$log', 'es.Services.WebApi', '
                 }
             }
 
-            var grdopt = {
-                pageable: true,
-                sortable: true,
-                filterable: true
-            };
+            esWebApiService.fetchPublicQueryInfo($scope.GroupID, $scope.FilterID)
+                .success(function(ret) {
+                    var grdopt = {
+                        pageable: true,
+                        sortable: true,
+                        filterable: true
+                    };
 
-            var kdsoptions = {
-                serverFiltering: true,
-                serverPaging: true,
-                pageSize: 50
-            };
+                    var kdsoptions = {
+                        serverFiltering: true,
+                        serverPaging: true,
+                        pageSize: 50
+                    };
 
-            grdopt.dataSource = prepareWebScroller(null, esWebApiService, $log, function() {
-                return {
-                    GroupID: $scope.GroupID,
-                    FilterID: $scope.FilterID,
-                    Params: {
-                        Code: $scope.Code,
-                        OppRevenue: $scope.OppRevenue
+                    grdopt.dataSource = prepareWebScroller(null, esWebApiService, $log, function() {
+                        return {
+                            GroupID: $scope.GroupID,
+                            FilterID: $scope.FilterID,
+                            Params: {
+                                Code: $scope.Code,
+                                OppRevenue: $scope.OppRevenue
+                            }
+                        }
+                    }, kdsoptions);
+
+                    grdopt.columns = convertJanusToTelerik(ret);
+                    $scope.gridOptions = grdopt;
+                    if (reBuild) {
+                        $scope.xCount += 1;
+                        $log.info("Rebuilding ", $scope.xCount);
                     }
-                }
-            }, kdsoptions);
-
-            $scope.gridOptions = grdopt;
-            if (reBuild) {
-                $scope.xCount += 1;
-                $log.info("Rebuilding ", $scope.xCount);
-            }
 
 
-            $log.info('OK! ');
+                    $log.info('OK! ');
+
+                });
         }
     }
 

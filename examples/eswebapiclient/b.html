@@ -35,10 +35,21 @@
     </div>
     <hr/>
     <div class="boxc-col">
-        <h4>Selected Record GID is {{taskToSel}} </h4>
+        <h4>k-ng-model is -{{taskToSel}}-</h4>
+        <h4>ng-mode is -{{myVal}}-</h4>
         <label>Product:</label>
-        <select kendo-combo-box="mCombo" k-options="comboOptions" style="width: 400px" ng-model="taskToSel">
-        </select>
+        
+        
+            <select kendo-combo-box k-options="comboOptions" style="width: 400px" ng-model="myVal" k-ng-model="taskToSel">
+            </select>
+        
+        <!-- 
+        
+            <select kendo-multi-select k-options="comboOptions" style="width: 400px" ng-model="myVal" k-ng-model="taskToSel">
+            </select>
+         -->
+
+
     </div>
     <!--
     <div class="boxc-col">

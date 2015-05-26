@@ -16,6 +16,7 @@
     constant('ESWEBAPI_URL', {
         __LOGIN__: "api/Login",
         __PUBLICQUERY__: "api/rpc/PublicQuery/",
+        __PUBLICQUERY_INFO__: "api/rpc/PublicQueryInfo/",
         __USERSITES__: "api/Login/Usersites",
         __SCROLLERROOTTABLE__: "api/rpc/SimpleScrollerRootTable/",
         __SCROLLER__: "api/rpc/SimpleScroller/",
@@ -433,17 +434,9 @@
                                 return execScrollerCommand(scrollerCommandParams);
                             },
 
-                            /**
-                             * fetch PQ schema
-                             * @param  {string} GroupID
-                             * @param  {string} FilterID
-                             * @param  {object} Params - parameters specific to GroupID / FilterID
-                             * [@param  {string} httpVerb] - optional parameter to specify HTTP verb. Default is GET
-                             * @return {AngularHttpPromise}
-                             */
-                            fetchPublicQuery: function(GroupID, FilterID, Params, httpVerb) {
-                                var surl = urlWEBAPI.concat(ESWEBAPI_URL.__PUBLICQUERY__, GroupID, "/", FilterID);
-                                var tt = esGlobals.trackTimer("PQ", "FETCH", GroupID.concat("/", FilterID));
+                            fetchPublicQueryInfo: function(GroupID, FilterID) {
+                                var surl = urlWEBAPI.concat(ESWEBAPI_URL.__PUBLICQUERY_INFO__, GroupID, "/", FilterID);
+                                var tt = esGlobals.trackTimer("PQ", "INFO", GroupID.concat("/", FilterID));
                                 tt.startTime();
 
                                 /**
@@ -454,12 +447,54 @@
                                     headers: {
                                         "Authorization": esGlobals.getWebApiToken()
                                     },
+                                    url: surl
+                                };
+
+                                var ht = $http({
+                                    method: 'get',
+                                    headers: {
+                                        "Authorization": esGlobals.getWebApiToken()
+                                    },
+                                    url: surl
+                                });
+
+                                
+                                ht.then(function() {
+                                    tt.endTime().send();
+                                });
+
+                                //finally return the $http promise
+                                return ht;
+                            },
+
+                            /**
+                             * fetch PQ schema
+                             * @param  {string} GroupID
+                             * @param  {string} FilterID
+                             * @param  {object} Params - parameters specific to GroupID / FilterID
+                             * [@param  {string} httpVerb] - optional parameter to specify HTTP verb. Default is GET
+                             * @return {AngularHttpPromise}
+                             */
+                            fetchPublicQuery: function(GroupID, FilterID, options, Params, httpVerb) {
+                                var surl = urlWEBAPI.concat(ESWEBAPI_URL.__PUBLICQUERY__, GroupID, "/", FilterID);
+                                var tt = esGlobals.trackTimer("PQ", "FETCH", GroupID.concat("/", FilterID));
+                                tt.startTime();
+
+                                /**
+                                 * $http object configuration
+                                 * @type {Object}
+                                 */
+                                var httpConfig = {
+                                    headers: {
+                                        "Authorization": esGlobals.getWebApiToken(),
+                                        "X-ESPQOptions": JSON.stringify(options)
+                                    },
                                     url: surl,
                                     params: Params
                                 };
 
                                 //if called with 3 arguments then default to a GET request
-                                httpConfig.method = (arguments.length === 3) ? 'GET' : httpVerb;
+                                httpConfig.method =  httpVerb || 'GET';
 
                                 //if not a GET request, switch to data instead of params
                                 if (httpConfig.method !== 'GET') {

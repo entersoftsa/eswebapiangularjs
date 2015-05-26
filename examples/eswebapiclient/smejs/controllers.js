@@ -45,11 +45,20 @@ function prepareWebScroller(dsType, esWebApiService, $log, GroupID, FilterID, pa
                             pq.Rows = _.filter(pq.Rows, function(gItem) {
                                 return gItem.Code.indexOf(vVal) > -1;
                             }) || [];
+
+                            $log.info("ES FILTERED ", options.data.filter.filters[0].value, " REMAIN ", pq.Rows.length, " recsords");
                         }
 
                         if (pq.Count == -1) {
                             pq.Count = pq.Rows ? pq.Rows.length : 0;
                         }
+
+
+                        if (pq.Rows.length == 0) {
+                            options.error("Now records found");
+                            return;
+                        }
+
 
                         pq.Rows = _.sortBy(pq.Rows, 'Code');
 
@@ -86,142 +95,175 @@ function prepareWebScroller(dsType, esWebApiService, $log, GroupID, FilterID, pa
 }
 
 smeControllers.controller('smeCtrl', ['$scope', '$log', 'es.Services.WebApi', '_', 'es.Services.Cache', 'es.Services.Messaging',
-    function($scope, $log, esWebApiService, _, cache, esMessaging) {
+function($scope, $log, esWebApiService, _, cache, esMessaging) {
 
-        $scope.currentUser = {};
-        $scope.xCount = 0;
+    $scope.currentUser = {};
+    $scope.xCount = 0;
 
-        $scope.credentials = {
-            UserID: 'sme',
-            Password: '1234',
-            BranchID: 'ΑΘΗ',
-            LangID: 'el-GR'
-        };
+    $scope.credentials = {
+        UserID: 'sme',
+        Password: '1234',
+        BranchID: 'ΑΘΗ',
+        LangID: 'el-GR'
+    };
 
-        $scope.GroupID = "ESTMTask";
-        $scope.FilterID = "RequestsToBeApproved";
-        $scope.gridOptions = null;
+    $scope.GroupID = "ESTMTask";
+    $scope.FilterID = "RequestsToBeApproved";
+    $scope.gridOptions = null;
 
-        esMessaging.subscribe("AUTH_CHANGED", function(session, tok) {
-            if (session && session.connectionModel) {
-                $scope.currentUser.Name = session.connectionModel.Name;
-            } else {
-                $scope.currentUser.Name = 'NOT Approved';
+    esMessaging.subscribe("AUTH_CHANGED", function(session, tok) {
+        if (session && session.connectionModel) {
+            $scope.currentUser.Name = session.connectionModel.Name;
+        } else {
+            $scope.currentUser.Name = 'NOT Approved';
+        }
+    });
+
+    esWebApiService.openSession($scope.credentials)
+        .success(function($user, status, headers, config) {
+            console.log("Logged in. Ready to proceed");
+        })
+        .error(function(rejection) {
+            var msg = rejection ? rejection.UserMessage : "Generic server error";
+            noty({
+                text: msg,
+                type: 'error',
+                timeout: 3000,
+                killer: true
+            });
+        });
+
+    //$scope.taskToSel = "2b995a10-a835-4148-b222-e4c67ec21b75";
+    $scope.myVal = "7e5f2781-e23b-4598-8889-0eac049ca520";
+    $scope.taskToSel = {
+        "GID": "7e5f2781-e23b-4598-8889-0eac049ca520",
+        "Code": "GenReq-00649",
+        "Description": "xxx",
+        "RequestNature": "Nature 1",
+        "RequestNatureAA": 1,
+        "RequestComments": null,
+        "RequestDate": "2015-03-26T15:05:51.343",
+        "RequestExpiresOn": "2015-03-26T00:00:00",
+        "RequestCategory": "Επίπεδο 1",
+        "RequestAmount": 29,
+        "RequestingUserID": "alp",
+        "RequestingUserName": "Περβαινάς Άλκης",
+        "RequestingUserEmail": "alp@entersoft.gr",
+        "RequestingUserPhone": null,
+        "ProcessComments": null,
+        "ProcessCategory": null,
+        "ProcessState": 0,
+        "ProcessUser": null,
+        "ProcessDate": null,
+        "ProcessChannelName": null,
+        "ProcessChannel": null,
+        "RequestUser": "alp",
+        "PrioritySeqNum": 3,
+        "PriorityType": 2,
+        "Priority": "3-Υψηλή",
+        "Status": "1-Προς έγκριση",
+        "ProcessUserName": null,
+        "Level": 1,
+        "SeqNumFinal": 3,
+        "SeqNumCurrent": 1,
+        "Notes": null
+    };
+
+var kdsoptions = {
+    serverFiltering: true,
+    //serverPaging: true,
+    //pageSize: 50
+};
+
+$scope.comboOptions = {
+    //template: '<span class="order-id">#= Code #</span>-- #= RequestDate #, #= RequestNature #',
+    placeholder: "Select a Task",
+    autoBind: false,
+    filter: "contains",
+    ignoreCase: false,
+    minLength: 3,
+    dataTextField: "Code",
+    dataValueField: "GID",
+    /*
+                virtual: {
+                    itemHeight: 26,
+                    valueMapper: function(options) {
+                        $log.info("options ", JSON.stringify(options));
+                        //Execute the same scroller with equal param to locate a single record 
+                        esWebApiService.fetchPublicQuery($scope.GroupID, $scope.FilterID, {})
+                            .success(function(pq) {
+                                // SME CHANGE THIS ONCE WE HAVE CORRECT PQ
+                                if (pq.Count == -1) {
+                                    pq.Count = pq.Rows ? pq.Rows.length : 0;
+                                }
+                                // END tackling
+
+                                var iRet = _.findWhere(pq.Rows, {
+                                    GID: options.value
+                                });
+                                if (iRet) {
+                                    pq.Rows = [iRet];
+                                    var ind = 62;
+                                    options.success([ind]);
+                                    $log.info("LOOKUP INDEX");
+                                    return;
+                                } else {
+                                    options.success([]);
+                                }
+
+                            });
+                    }
+                },
+    */
+
+    dataSource: prepareWebScroller(null, esWebApiService, $log, $scope.GroupID, $scope.FilterID, {}, kdsoptions),
+    height: 220
+};
+
+
+$scope.planB = function(reBuild) {
+    if (!reBuild) {
+        if (!$scope.gridOptions || !$scope.gridOptions.dataSource) {
+            reBuild = true;
+        } else {
+            $scope.gridOptions.dataSource.read();
+            $log.info("Requery");
+            return;
+        }
+    }
+
+    var grdopt = {
+        //pageable: true,
+        sortable: true,
+        filterable: true,
+        scrollable: {
+            virtual: true
+        },
+    };
+
+    esWebApiService.fetchPublicQuery($scope.GroupID, $scope.FilterID, {})
+        .success(function(pq) {
+            grdopt.columns = calcCols(grdopt.columns, pq.Rows);
+
+            var kdsoptions = {
+                serverPaging: true,
+                serverFiltering: false,
+                serverSorting: false,
+                pageSize: 10,
+
+            };
+            grdopt.dataSource = prepareWebScroller(null, esWebApiService, $log, $scope.GroupID, $scope.FilterID, {}, kdsoptions);
+
+            $scope.gridOptions = grdopt;
+            if (reBuild) {
+                $scope.xCount += 1;
+                $log.info("Rebuilding ", $scope.xCount);
             }
         });
 
-        esWebApiService.openSession($scope.credentials)
-            .success(function($user, status, headers, config) {
-                console.log("Logged in. Ready to proceed");
-            })
-            .error(function(rejection) {
-                var msg = rejection ? rejection.UserMessage : "Generic server error";
-                noty({
-                    text: msg,
-                    type: 'error',
-                    timeout: 3000,
-                    killer: true
-                });
-            });
-
-        $scope.taskToSel = "2b995a10-a835-4148-b222-e4c67ec21b75";
-        $scope.textToSel = "GenReq-00694";
-
-        var kdsoptions = {
-            serverFiltering: true,
-            serverPaging: true,
-            pageSize: 50
-        };
-
-        $scope.comboOptions = {
-            template: '<span class="order-id">#= Code #</span>-- #= RequestDate #, #= RequestNature #',
-            placeholder: "Select a Task",
-            autoBind: false,
-            filter: "contains",
-            ignoreCase: false,
-            minLength: 3,
-            dataTextField: "Code",
-            dataValueField: "GID",
-
-            virtual: {
-                itemHeight: 26,
-                valueMapper: function(options) {
-                    $log.info("options ", JSON.stringify(options));
-                    //Execute the same scroller with equal param to locate a single record 
-                    esWebApiService.fetchPublicQuery($scope.GroupID, $scope.FilterID, {})
-                        .success(function(pq) {
-                            // SME CHANGE THIS ONCE WE HAVE CORRECT PQ
-                            if (pq.Count == -1) {
-                                pq.Count = pq.Rows ? pq.Rows.length : 0;
-                            }
-                            // END tackling
-
-                            var iRet = _.findWhere(pq.Rows, {
-                                GID: options.value
-                            });
-                            if (iRet) {
-                                pq.Rows = [iRet];
-                                var ind = 62;
-                                options.success([ind]);
-                                $log.info("LOOKUP INDEX");
-                                return;
-                            } else {
-                                options.success([]);
-                            }
-
-                        });
-                }
-            },
-
-            dataSource: prepareWebScroller(null, esWebApiService, $log, $scope.GroupID, $scope.FilterID, {}, kdsoptions),
-            height: 220
-        };
-
-
-        $scope.planB = function(reBuild) {
-            if (!reBuild) {
-                if (!$scope.gridOptions || !$scope.gridOptions.dataSource) {
-                    reBuild = true;
-                } else {
-                    $scope.gridOptions.dataSource.read();
-                    $log.info("Requery");
-                    return;
-                }
-            }
-
-            var grdopt = {
-                //pageable: true,
-                sortable: true,
-                filterable: true,
-                scrollable: {
-                    virtual: true
-                },
-            };
-
-            esWebApiService.fetchPublicQuery($scope.GroupID, $scope.FilterID, {})
-                .success(function(pq) {
-                    grdopt.columns = calcCols(grdopt.columns, pq.Rows);
-
-                    var kdsoptions = {
-                        serverPaging: true,
-                        serverFiltering: false,
-                        serverSorting: false,
-                        pageSize: 10,
-
-                    };
-                    grdopt.dataSource = prepareWebScroller(null, esWebApiService, $log, $scope.GroupID, $scope.FilterID, {}, kdsoptions);
-
-                    $scope.gridOptions = grdopt;
-                    if (reBuild) {
-                        $scope.xCount += 1;
-                        $log.info("Rebuilding ", $scope.xCount);
-                    }
-                });
-
-            $log.info('OK! ');
-        }
-    }
-]);
+    $log.info('OK! ');
+}
+}]);
 
 
 smeControllers.controller('cubeCtrl', ['$scope', '$log', 'es.Services.WebApi', '_', 'es.Services.Cache', 'es.Services.Messaging',
@@ -260,7 +302,7 @@ smeControllers.controller('cubeCtrl', ['$scope', '$log', 'es.Services.WebApi', '
                 });
             });
 
- 
+
         $scope.planD = function() {
 
             var dsOptions = {

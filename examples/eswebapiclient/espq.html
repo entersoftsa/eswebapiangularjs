@@ -28,15 +28,20 @@
         <input type="text" ng-model="GroupID" class="form-control" placeholder="Entersoft Public Query Group ID" required autofocus>
         <input type="text" ng-model="FilterID" class="form-control" placeholder="Entersoft Public Query Filter ID" required>
         <input type="text" ng-model="Code" class="form-control" placeholder="Code">
-        <input kendo-numeric-text-box k-ng-model="OppRevenue" culture="el-GR" format="n" spinners="false" />
+        <input kendo-numeric-text-box k-ng-model="OppRevenue" culture="el-GR"  spinners="false" />
         <div>
             <button es-analytics-on es-analytics-category="hello stavros" type="submit" ng-click="planB()">Execute</button>
             <button es-analytics-on es-analytics-category="hello stavros" type="submit" ng-click="planB(true)">ReBuild</button>
+            <button es-analytics-on es-analytics-category="hello stavros" type="submit" ng-click="getPQInfo()">PQ Info</button>
         </div>
     </div>
 
     <div class='container' ng-cloak>
-        <div kendo-grid k-ng-delay="gridOptions" k-options="gridOptions" k-rebind="xCount" />
+        <div kendo-grid k-ng-delay="gridOptions.columns" k-options="gridOptions" k-rebind="xCount" />
+    </div>
+
+    <div>
+        <textarea width="500" height="500" ng-show="pqInfo">{{pqInfo}}</textarea>
     </div>
 
 
@@ -60,6 +65,8 @@
     <!-- 
     <script src="../../dist/esframework.min.js"></script>
  -->
+    
+    <script src="telerik/js/cultures/kendo.culture.el-GR.min.js"></script>
     <script src="telerik/js/kendo.all.min.js"></script>
     <script src="smejs/app.js"></script>
     <script src="smejs/espqcontroller.js"></script>
