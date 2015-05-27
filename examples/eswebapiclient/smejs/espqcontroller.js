@@ -5,16 +5,26 @@
 var smeControllers = angular.module('smeControllers', ['kendo.directives', 'underscore']);
 
 
-function jColToTCol(jCol) {
+function jColToTCol(gridexInfo, jCol) {
     var tCol = {
         field: jCol.ColName,
-        title: jCol.Caption
+        title: jCol.Caption,
+        //width: parseInt(jCol.Width)
     };
 
     if (jCol.TextAlignment == "3") {
         tCol.attributes = { 
             style: "text-align: right;"
         };
+    }
+
+    //Enum Column
+    if (jCol.EditType == "5") {
+        var l1 = _.sortBy(_.where(gridexInfo.ValueList, { ColName: jCol.ColName}), function(x) { return parseInt(x.Value); });
+        var l2 = _.map(l1, function(x) { return { text: x.Caption, value: parseInt(x.Value)}; });
+        if (l2 && l2.length) {
+            tCol.values = l2;
+        }
     }
 
     if (jCol.FormatString && jCol.FormatString != "") {
@@ -34,7 +44,7 @@ function convertJanusToTelerik(gridexInfo) {
         return parseInt(x.AA);
     });
     var z2 = _.map(z, function(x) {
-        return jColToTCol(x);
+        return jColToTCol(gridexInfo, x);
     });
     return z2;
 }
@@ -117,8 +127,8 @@ smeControllers.controller('esPQCtrl', ['$scope', '$log', 'es.Services.WebApi', '
             LangID: 'el-GR'
         };
 
-        $scope.GroupID = "ESTMTask";
-        $scope.FilterID = "WebScrollerTest";
+        $scope.GroupID = "ESFICustomer";
+        $scope.FilterID = "CustomerList";
         //$scope.FilterID = "RequestsToBeApproved";
         $scope.gridOptions = null;
         $scope.xCount = 0;
@@ -170,13 +180,14 @@ smeControllers.controller('esPQCtrl', ['$scope', '$log', 'es.Services.WebApi', '
                     var grdopt = {
                         pageable: true,
                         sortable: true,
-                        filterable: true
+                        filterable: true,
+                        resizable: true
                     };
 
                     var kdsoptions = {
                         serverFiltering: true,
                         serverPaging: true,
-                        pageSize: 50
+                        pageSize: 20
                     };
 
                     grdopt.dataSource = prepareWebScroller(null, esWebApiService, $log, function() {
@@ -189,6 +200,10 @@ smeControllers.controller('esPQCtrl', ['$scope', '$log', 'es.Services.WebApi', '
                             }
                         }
                     }, kdsoptions);
+
+                    // hook test
+                    //grdopt.dataSource.aggregate = [{field: "NumericField1", aggregate: "count"}];
+                    // end test
 
                     grdopt.columns = convertJanusToTelerik(ret);
                     $scope.gridOptions = grdopt;

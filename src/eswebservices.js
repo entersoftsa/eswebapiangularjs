@@ -18,6 +18,7 @@
         __PUBLICQUERY__: "api/rpc/PublicQuery/",
         __PUBLICQUERY_INFO__: "api/rpc/PublicQueryInfo/",
         __USERSITES__: "api/Login/Usersites",
+        __STANDARD_ZOOM__: "api/rpc/FetchStdZoom/",
         __SCROLLERROOTTABLE__: "api/rpc/SimpleScrollerRootTable/",
         __SCROLLER__: "api/rpc/SimpleScroller/",
         __ENTITYACTION__: "api/Entity/",
@@ -439,21 +440,33 @@
                                 var tt = esGlobals.trackTimer("PQ", "INFO", GroupID.concat("/", FilterID));
                                 tt.startTime();
 
-                                /**
-                                 * $http object configuration
-                                 * @type {Object}
-                                 */
-                                var httpConfig = {
-                                    headers: {
-                                        "Authorization": esGlobals.getWebApiToken()
-                                    },
-                                    url: surl
-                                };
-
                                 var ht = $http({
                                     method: 'get',
                                     headers: {
                                         "Authorization": esGlobals.getWebApiToken()
+                                    },
+                                    url: surl
+                                });
+
+                                
+                                ht.then(function() {
+                                    tt.endTime().send();
+                                });
+
+                                //finally return the $http promise
+                                return ht;
+                            },
+
+                            fetchStdZoom: function(zoomID, options) {
+                                var surl = urlWEBAPI.concat(ESWEBAPI_URL.__STANDARD_ZOOM__, zoomID);
+                                var tt = esGlobals.trackTimer("ZOOM", "FETCH", zoomID);
+                                tt.startTime();
+
+                                var ht = $http({
+                                    method: 'get',
+                                    headers: {
+                                        "Authorization": esGlobals.getWebApiToken(),
+                                        "X-ESPQOptions": JSON.stringify(options)
                                     },
                                     url: surl
                                 });
