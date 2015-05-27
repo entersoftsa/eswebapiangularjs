@@ -499,12 +499,15 @@
                                  */
                                 var httpConfig = {
                                     headers: {
-                                        "Authorization": esGlobals.getWebApiToken(),
-                                        "X-ESPQOptions": JSON.stringify(options)
+                                        "Authorization": esGlobals.getWebApiToken()
                                     },
                                     url: surl,
                                     params: Params
                                 };
+
+                                if (options) {
+                                    httpConfig.headers["X-ESPQOptions"] = JSON.stringify(options);
+                                }
 
                                 //if called with 3 arguments then default to a GET request
                                 httpConfig.method =  httpVerb || 'GET';
