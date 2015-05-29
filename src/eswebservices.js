@@ -135,7 +135,7 @@
 
                                 // if google analytics are enabled register the exception as well
                                 var esGA = esGlobals.getGA();
-                                if (angular.isDefined(ga)) {
+                                if (esGA) {
                                     esGA.registerException(messageObj);
                                 }
 
@@ -542,7 +542,7 @@
                                 }).success(function(data) {
                                     // if google analytics are enabled register the exception as well
                                     var esGA = esGlobals.getGA();
-                                    if (angular.isDefined(ga)) {
+                                    if (esGA) {
                                         esGA.registerEventTrack({
                                             category: "ELASTIC_SEARCH",
                                             action: "SEARCH",
