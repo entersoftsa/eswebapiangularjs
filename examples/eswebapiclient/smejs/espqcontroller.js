@@ -2,7 +2,7 @@
 
 /* Controllers */
 
-var smeControllers = angular.module('smeControllers', ['kendo.directives', 'underscore']);
+var smeControllers = angular.module('smeControllers', ['kendo.directives', 'underscore', 'es.Web.UI']);
 
 
 function jColToTCol(gridexInfo, jCol) {
@@ -145,6 +145,8 @@ smeControllers.controller('esPQCtrl', ['$scope', '$log', 'es.Services.WebApi', '
         //$scope.FilterID = "RequestsToBeApproved";
         $scope.gridOptions = null;
         $scope.xCount = 0;
+        $scope.pqInfo = null;
+        $scope.pVals = {};
 
         esMessaging.subscribe("AUTH_CHANGED", function(session, tok) {
             if (session && session.connectionModel) {
@@ -172,7 +174,7 @@ smeControllers.controller('esPQCtrl', ['$scope', '$log', 'es.Services.WebApi', '
         $scope.getPQInfo = function() {
             esWebApiService.fetchPublicQueryInfo($scope.GroupID, $scope.FilterID)
                 .success(function(ret) {
-                    $scope.pqInfo = JSON.stringify(ret);
+                    $scope.pqInfo = ret;
                 });
         }
 
@@ -213,14 +215,11 @@ smeControllers.controller('esPQCtrl', ['$scope', '$log', 'es.Services.WebApi', '
                         return {
                             GroupID: $scope.GroupID,
                             FilterID: $scope.FilterID,
-                            Params: {
-                                Code: $scope.Code,
-                                OppRevenue: $scope.OppRevenue
-                            }
+                            Params: pVals
                         }
                     }, kdsoptions);
 
-                    grdopt.excelExport = functino(e) {
+                    grdopt.excelExport = function(e) {
                         e.workbook.fileName += "sme-";
                     };
 

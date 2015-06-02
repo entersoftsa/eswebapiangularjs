@@ -2,13 +2,39 @@
 <html lang="en" ng-app="esAngApp">
 
 <head>
+    <link rel="stylesheet" href="http://cdn.kendostatic.com/2015.1.429/styles/kendo.common-material.min.css" />
+    <link rel="stylesheet" href="http://cdn.kendostatic.com/2015.1.429/styles/kendo.material.min.css" />
+    <link rel="stylesheet" href="http://cdn.kendostatic.com/2015.1.429/styles/kendo.dataviz.min.css" />
+    <link rel="stylesheet" href="http://cdn.kendostatic.com/2015.1.429/styles/kendo.dataviz.material.min.css" />
+</head>
+
+<body>
     <div ng-controller="esAngCtrl">
-        <my-customer es-param-def="abcd" es-param-item="customer"></my-customer>
-        <hr>
-        <div my-customer="hello" es-param-def="hi" es-param-item="data" />
-    </div>
-    <script src="bower_components/angular/angular.js"></script>
-    <script src="esangjs/app.js"></script>
-    </body>
+        <div>
+
+            <!-- <h2>{{PQInfo.Filter[0].Caption}}</h2>
+            <hr>
+            <es-param-multi-zoom es-param-val="pVals" es-param-def="PQInfo.Param[6]"></es-param-multi-zoom>
+            <hr>
+            <es-param-zoom es-param-val="pVals" es-param-def="PQInfo.Param[7]"></es-param-zoom>
+            <hr>
+            <textarea>{{pVals}}</textarea> -->
+            <es-params-panel es-params-values="pVals" es-params-def="PQInfo.Param"></es-params-panel>
+            <textarea>{{pVals}}</textarea>
+        </div>
+    
+        <script src="bower_components/jquery/dist/jquery.min.js"></script>
+        <script src="bower_components/angular/angular.js"></script>
+        <script src="telerik/js/cultures/kendo.culture.el-GR.min.js"></script>
+        <script src="telerik/js/kendo.all.min.js"></script>
+
+        <script src="bower_components/ngStorage/ngstorage.min.js"></script>
+        <script src="bower_components/angular-sanitize/angular-sanitize.js"></script>
+        <script src="../../src/eswebcore.js"></script>
+        <script src="../../src/eswebservices.js"></script>
+        <script src="../../src/esinit.js"></script>
+        <script src="esangjs/gridex.js "></script>
+        <script src="esangjs/app.js "></script>
+</body>
 
 </html>

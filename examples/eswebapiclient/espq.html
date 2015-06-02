@@ -27,8 +27,9 @@
     <div>
         <input type="text" ng-model="GroupID" class="form-control" placeholder="Entersoft Public Query Group ID" required autofocus>
         <input type="text" ng-model="FilterID" class="form-control" placeholder="Entersoft Public Query Filter ID" required>
-        <input type="text" ng-model="Code" class="form-control" placeholder="Code">
-        <input kendo-numeric-text-box k-ng-model="OppRevenue" culture="el-GR"  spinners="false" />
+        <hr>
+        <es-params-panel ng-cloak es-params-values="pVals" es-params-def="pqInfo.Param"></es-params-panel>
+        <hr>
         <div>
             <button es-analytics-on es-analytics-category="hello stavros" type="submit" ng-click="planB()">Execute</button>
             <button es-analytics-on es-analytics-category="hello stavros" type="submit" ng-click="planB(true)">ReBuild</button>
@@ -57,7 +58,7 @@
     <script src="bower_components/underscore/underscore-min.js"></script>
     <script src="bower_components/jscache/cache.js"></script>
     <script src="../../src/esanalytics.js"></script>
-    <script src="../../src/eswebcore.js"></script>
+    <script src="../../src/eswebui.js"></script>
     <script src="../../src/eswebservices.js"></script>
     <script src="../../src/eslog.js"></script>
     <script src="../../src/esinit.js"></script>
