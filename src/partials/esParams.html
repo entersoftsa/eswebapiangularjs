@@ -1,35 +1,6 @@
-<!-- <div>
-	<h4>Number of Parameters found in the Params Panel is {{esParams.length}}
-	<hr>
-	<div ng-repeat="param in esParams | orderBy:'parseInt(AA)'">
-		{{param.Caption}} <input type="text" ng-model="param.Tooltip"/>
-	</div>
-</div> -->
-<div>
-    <h4>Number of Parameters found in the Params Panel is {{esParamsDef.length}}
-	<hr>
-	<div ng-repeat="param in esParamsDef | orderBy:'parseInt(AA)'">
-		<div ng-switch on="param | esParamTypeMapper">
-
-			<div ng-switch-when="esParamZoom">
-				<es-param-zoom es-param-val="esParamsValues" es-param-def="param"></es-param-zoom>
-				<hr>
-			</div>
-
-			<div ng-switch-when="esParamMultiZoom">
-				<es-param-multi-zoom es-param-val="esParamsValues" es-param-def="param"></es-param-multi-zoom>
-				<hr>
-			</div>
-
-			<div ng-switch-when="esParamText">
-				<es-param-text es-param-val="esParamsValues" es-param-def="param"></es-param-text>
-				<hr>
-			</div>
-
-			<div ng-switch-default>
-				<label>{{param.Caption}}</label> <input type="text" ng-model="esParamsValues[param.ID]"/>
-				<hr>
-			</div>
-		</div>
-	</div>
+<div ng-repeat="param in esParamsDef | orderBy:'parseInt(AA)'">
+    <div>
+        <es-param es-type="param | esParamTypeMapper" es-param-val="esParamsValues" es-param-def="param"></es-param-zoom>
+        <hr>
+    </div>
 </div>

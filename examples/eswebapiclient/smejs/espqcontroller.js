@@ -215,7 +215,7 @@ smeControllers.controller('esPQCtrl', ['$scope', '$log', 'es.Services.WebApi', '
                         return {
                             GroupID: $scope.GroupID,
                             FilterID: $scope.FilterID,
-                            Params: pVals
+                            Params: $scope.pVals
                         }
                     }, kdsoptions);
 

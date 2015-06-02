@@ -44,7 +44,7 @@
     ]);
 
     esWEBUI
-    .filter('esParamTypeMapper', function() {
+        .filter('esParamTypeMapper', function() {
             var f = function(pParam) {
                 if (!pParam) {
                     return "";
@@ -52,77 +52,40 @@
 
                 if (pParam.InvSelectedMasterTable) {
                     if (pParam.InvSelectedMasterTable[4] == "Z") {
-                        if (pParam.MultiValued) {
+                        if (!pParam.MultiValued) {
                             return "esParamMultiZoom";
-                        }
-                        else {
+                        } else {
                             return "esParamZoom";
                         }
-                    }
-                    else {
+                    } else {
                         return "esParamText";
                     }
-                }
-                else
-                {
+                } else {
                     return "esParamText";
                 }
             };
             return f;
         })
-        .directive('esParamMultiZoom', ['es.Services.WebApi', function(esWebApiService) {
+        .directive('esParam', ['es.Services.WebApi', function(esWebApiService) {
             return {
                 restrict: 'AE',
                 scope: {
-                    esParamDef: "=esParamDef",
-                    esParamVal: "="
+                    esParamDef: "=",
+                    esParamVal: "=",
+                    esType: "="
                 },
-                templateUrl: function(element, attrs) {
-                    console.info("Parameter element = ", element, " Parameter attrs = ", attrs);
-                    return "../../src/partials/esParamMultiZoom.html";
-                },
-                link: function(scope, element, attrs) {
+                template: '<div ng-include src="\'../../src/partials/\'+esType+\'.html\'"></div>',
+                link: function(scope, iElement, iAttrs) {
                     if (!scope.esParamDef) {
                         throw "You must set a param";
                     }
-                    
-                    scope.myDS = prepareStdZoom(scope.esParamDef.InvSelectedMasterTable, esWebApiService);
-                }
-            };
-        }])
-        .directive('esParamZoom', ['es.Services.WebApi', function(esWebApiService) {
-            return {
-                restrict: 'AE',
-                scope: {
-                    esParamDef: "=esParamDef",
-                    esParamVal: "="
-                },
-                templateUrl: function(element, attrs) {
-                    console.info("Parameter element = ", element, " Parameter attrs = ", attrs);
-                    return "../../src/partials/esParamZoom.html";
-                },
-                link: function(scope, element, attrs) {
-                    if (!scope.esParamDef) {
-                        throw "You must set a param";
+
+                    if (scope.esParamDef.InvSelectedMasterTable) {
+                        scope.myDS = prepareStdZoom(scope.esParamDef.InvSelectedMasterTable, esWebApiService);
                     }
-                    
-                    scope.myDS = prepareStdZoom(scope.esParamDef.InvSelectedMasterTable, esWebApiService);
                 }
             };
         }])
-        .directive('esParamText', function() {
-            return {
-                restrict: 'AE',
-                scope: {
-                    esParamDef: '=',
-                    esParamVal: '='
-                },
-                templateUrl: function(element, attrs) {
-                    console.info("Parameter element = ", element, " Parameter attrs = ", attrs);
-                    return "../../src/partials/esParamText.html";
-                }
-            };
-        })
         .directive('esParamsPanel', function() {
             return {
                 restrict: 'AE',
