@@ -13,15 +13,24 @@ function jColToTCol(gridexInfo, jCol) {
     };
 
     if (jCol.TextAlignment == "3") {
-        tCol.attributes = { 
+        tCol.attributes = {
             style: "text-align: right;"
         };
     }
 
     //Enum Column
     if (jCol.EditType == "5") {
-        var l1 = _.sortBy(_.where(gridexInfo.ValueList, { ColName: jCol.ColName}), function(x) { return parseInt(x.Value); });
-        var l2 = _.map(l1, function(x) { return { text: x.Caption, value: parseInt(x.Value)}; });
+        var l1 = _.sortBy(_.where(gridexInfo.ValueList, {
+            ColName: jCol.ColName
+        }), function(x) {
+            return parseInt(x.Value);
+        });
+        var l2 = _.map(l1, function(x) {
+            return {
+                text: x.Caption,
+                value: parseInt(x.Value)
+            };
+        });
         if (l2 && l2.length) {
             tCol.values = l2;
         }
@@ -95,9 +104,13 @@ function prepareWebScroller(dsType, esWebApiService, $log, espqParams, esOptions
                     .error(function(err) {
                         options.error(err);
                     });
-            }
+            },
 
         },
+        requestStart: function(e) {
+            console.log("request started ", e);
+        },
+
         schema: {
             data: "Rows",
             total: "Count"
@@ -181,7 +194,13 @@ smeControllers.controller('esPQCtrl', ['$scope', '$log', 'es.Services.WebApi', '
                         pageable: true,
                         sortable: true,
                         filterable: true,
-                        resizable: true
+                        resizable: true,
+                        toolbar: ["excel"],
+                        excel: {
+                            allPages: true,
+                            fileName: $scope.GroupID + "-" + $scope.FilterID + ".xlsx",
+                            filterable: true
+                        }
                     };
 
                     var kdsoptions = {
@@ -200,6 +219,10 @@ smeControllers.controller('esPQCtrl', ['$scope', '$log', 'es.Services.WebApi', '
                             }
                         }
                     }, kdsoptions);
+
+                    grdopt.excelExport = functino(e) {
+                        e.workbook.fileName += "sme-";
+                    };
 
                     // hook test
                     //grdopt.dataSource.aggregate = [{field: "NumericField1", aggregate: "count"}];
