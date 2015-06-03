@@ -90,12 +90,16 @@ function prepareWebScroller(dsType, esWebApiService, $log, espqParams, esOptions
                             }) || [];
                         }
 
+                        if (!angular.isDefined(pq.Rows))
+                        {
+                            pq.Rows = [];
+                            pq.Count = 0;
+                        }
+
                         if (pq.Count == -1) {
                             pq.Count = pq.Rows ? pq.Rows.length : 0;
                         }
-
-                        // pq.Rows = _.sortBy(pq.Rows, 'Code');
-
+                        
                         // END tackling
 
                         options.success(pq);
