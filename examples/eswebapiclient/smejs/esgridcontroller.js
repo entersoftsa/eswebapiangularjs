@@ -7,8 +7,8 @@ var smeControllers = angular.module('smeControllers', ['kendo.directives', 'unde
 
 
 
-smeControllers.controller('esPQCtrl', ['$scope', '$log', 'es.Services.WebApi', 'es.UI.Web.GridHelper',  '_', 'es.Services.Cache', 'es.Services.Messaging',
-    function($scope, $log, esWebApiService, esWebGridHelper, _, cache, esMessaging) {
+smeControllers.controller('esPQCtrl', ['$timeout', '$scope', '$log', 'es.Services.WebApi', 'es.UI.Web.GridHelper', '_', 'es.Services.Cache', 'es.Services.Messaging',
+    function($timeout, $scope, $log, esWebApiService, esWebGridHelper, _, cache, esMessaging) {
 
         $scope.currentUser = {};
 
@@ -21,11 +21,28 @@ smeControllers.controller('esPQCtrl', ['$scope', '$log', 'es.Services.WebApi', '
 
         $scope.GroupID = "ESFICustomer";
         $scope.FilterID = "CustomerList";
-        //$scope.FilterID = "RequestsToBeApproved";
         $scope.gridOptions = null;
-        $scope.xCount = 0;
-        $scope.pqInfo = null;
         $scope.pVals = {};
+        $scope.pqInfo = null;
+
+        function onChange(arg) {
+            debugger;
+            kendoConsole.log("Grid change");
+        }
+
+        function onDataBound(arg) {
+            debugger;
+            kendoConsole.log("Grid data bound");
+        }
+
+        function onDataBinding(arg) {
+            debugger;
+            kendoConsole.log("Grid data binding");
+        }
+
+        $scope.xChange = onChange;
+        $scope.xDBound = onDataBound;
+        $scope.xDBinding = onDataBinding;
 
         esMessaging.subscribe("AUTH_CHANGED", function(session, tok) {
             if (session && session.connectionModel) {
@@ -38,6 +55,14 @@ smeControllers.controller('esPQCtrl', ['$scope', '$log', 'es.Services.WebApi', '
         esWebApiService.openSession($scope.credentials)
             .success(function($user, status, headers, config) {
                 console.log("Logged in. Ready to proceed");
+                esWebApiService.fetchPublicQueryInfo($scope.GroupID, $scope.FilterID)
+                    .success(function(ret) {
+                        $timeout(function() {
+                            var v = esWebGridHelper.winGridInfoToESGridInfo(ret);
+                            $scope.pqInfo = v;
+                        }, 3000);
+
+                    });
             })
             .error(function(rejection) {
                 var msg = rejection ? rejection.UserMessage : "Generic server error";
@@ -49,26 +74,9 @@ smeControllers.controller('esPQCtrl', ['$scope', '$log', 'es.Services.WebApi', '
                 });
             });
 
-
-        $scope.getPQInfo = function() {
-            esWebApiService.fetchPublicQueryInfo($scope.GroupID, $scope.FilterID)
-                .success(function(ret) {
-                    $scope.pqInfo = ret;
-                });
-        }
-
-
-        $scope.planB = function(reBuild) {
-            if (!reBuild) {
-                if (!$scope.gridOptions || !$scope.gridOptions.columns) {
-                    reBuild = true;
-                } else {
-                    $scope.gridOptions.dataSource.read();
-                    $log.info("Requery");
-                    return;
-                }
-            }
-
+        $scope.execute = function() {
+            $scope.yyy.Caption = (new Date()).toString();
+            return;
             esWebApiService.fetchPublicQueryInfo($scope.GroupID, $scope.FilterID)
                 .success(function(ret) {
                     var grdopt = {
@@ -98,26 +106,9 @@ smeControllers.controller('esPQCtrl', ['$scope', '$log', 'es.Services.WebApi', '
                         }
                     }, kdsoptions);
 
-                    /*
-                    grdopt.excelExport = function(e) {
-                        e.workbook.fileName += "sme-";
-                    };
-
-                    // hook test
-                    //grdopt.dataSource.aggregate = [{field: "NumericField1", aggregate: "count"}];
-                    // end test
-                    */
-
                     grdopt.columns = esWebGridHelper.esGridInfoToKInfo(esWebGridHelper.winGridInfoToESGridInfo(ret));
                     $scope.gridOptions = grdopt;
-                    if (reBuild) {
-                        $scope.xCount += 1;
-                        $log.info("Rebuilding ", $scope.xCount);
-                    }
-
-
                     $log.info('OK! ');
-
                 });
         }
     }

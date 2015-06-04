@@ -1,13 +1,15 @@
  <div class="boxc-col es-prm">
         <label class="es-prm-label">{{esParamDef.Caption}}</label>
-        <select class="es-prm-val" kendo-multi-select 
-                k-placeholder="esParamDef.Tooltip"
+        <select class="es-prm-val" 
+                kendo-multi-select 
+                k-rebind="esParamDef"
+                k-placeholder="esParamDef.Caption"
                 k-template="'<span><b>#: Code #</b> -- #: Description #</span>'"
                 k-data-text-field="esParamDef.InvSelectedMasterField"
                 k-data-value-field="esParamDef.InvSelectedMasterField"
                 k-filter="'contains'"
                 k-auto-bind="false"
                 ng-model="esParamVal[esParamDef.ID]"
-                k-data-source="myDS">
+                k-data-source="esParamLookupDS">
         </select>
     </div>

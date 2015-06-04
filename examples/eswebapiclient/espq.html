@@ -4,46 +4,32 @@
 <head>
     <meta charset="utf-8">
     <title>Entersoft SME Samples</title>
-
-    <link rel="stylesheet" href="bower_components/bootstrap/dist/css/bootstrap.css">
     <link rel="stylesheet" href="css/app.css">
-    <link rel="stylesheet" href="css/animations.css">
-
     <link rel="stylesheet" href="http://cdn.kendostatic.com/2015.1.429/styles/kendo.common-material.min.css" />
     <link rel="stylesheet" href="http://cdn.kendostatic.com/2015.1.429/styles/kendo.material.min.css" />
     <link rel="stylesheet" href="http://cdn.kendostatic.com/2015.1.429/styles/kendo.dataviz.min.css" />
     <link rel="stylesheet" href="http://cdn.kendostatic.com/2015.1.429/styles/kendo.dataviz.material.min.css" />
-
-    
 </head>
 
 <body ng-controller="esPQCtrl">
     <div>
-        <h1 ng-cloak>
-            {{currentUser.Name}}
-        </h1>
-        <hr/>
+        <h4 ng-cloak>
+            {{pqInfo.caption}} - {{currentUser.Name}}
+        </h4>
+        <hr>
+        <button es-analytics-on es-analytics-category="hello stavros" type="submit" ng-click="execute()">Execute</button>
     </div>
     <div>
         <input type="text" ng-model="GroupID" class="form-control" placeholder="Entersoft Public Query Group ID" required autofocus>
         <input type="text" ng-model="FilterID" class="form-control" placeholder="Entersoft Public Query Filter ID" required>
         <hr>
-        <es-params-panel ng-cloak es-params-values="pVals" es-params-def="pqInfo.Param"></es-params-panel>
+        <es-params-panel ng-cloak es-params-values="pVals" es-params-def="pqInfo.params"></es-params-panel>
         <hr>
-        <div>
-            <button es-analytics-on es-analytics-category="hello stavros" type="submit" ng-click="planB()">Execute</button>
-            <button es-analytics-on es-analytics-category="hello stavros" type="submit" ng-click="planB(true)">ReBuild</button>
-            <button es-analytics-on es-analytics-category="hello stavros" type="submit" ng-click="getPQInfo()">PQ Info</button>
-        </div>
     </div>
 
-    <div class='container' ng-cloak>
+    <!-- <div class='container' ng-cloak>
         <div kendo-grid k-ng-delay="gridOptions.columns" k-options="gridOptions" height="1000" k-rebind="xCount" />
-    </div>
-
-    <div>
-        <textarea width="500" height="500" ng-show="pqInfo">{{pqInfo}}</textarea>
-    </div>
+    </div> -->
 
 
     <script src="bower_components/jquery/dist/jquery.min.js"></script>
@@ -62,16 +48,11 @@
     <script src="../../src/eswebservices.js"></script>
     <script src="../../src/eslog.js"></script>
     <script src="../../src/esinit.js"></script>
-    
-    <!-- 
-    <script src="../../dist/esframework.min.js"></script>
- -->
-    
     <script src="telerik/js/jszip.min.js"></script>
     <script src="telerik/js/cultures/kendo.culture.el-GR.min.js"></script>
     <script src="telerik/js/kendo.all.min.js"></script>
     <script src="smejs/app.js"></script>
-    <script src="smejs/espqcontroller.js"></script>
+    <script src="smejs/esgridcontroller.js"></script>
 </body>
 
 </html>
