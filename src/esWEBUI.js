@@ -7,7 +7,7 @@
             transport: {
                 read: function(options) {
 
-                    console.info("*** SERVER EXECUTION *** ", JSON.stringify(options));
+                    $log.info("*** SERVER EXECUTION *** ", JSON.stringify(options));
 
                     var pqOptions = {};
                     esWebApiService.fetchStdZoom(zoomID, pqOptions)
@@ -19,7 +19,7 @@
                             // END tackling
 
                             options.success(pq);
-                            console.info("Executed");
+                            $log.info("Executed");
                         })
                         .error(function(err) {
                             options.error(err);
@@ -34,6 +34,81 @@
         }
         return new kendo.data.DataSource(xParam);
     }
+
+    function prepareWebScroller(dsType, esWebApiService, $log, espqParams, esOptions) {
+    var xParam = {
+        transport: {
+            read: function(options) {
+
+                $log.info("*** SERVER EXECUTION *** ", JSON.stringify(options));
+
+                var qParams = angular.isFunction(espqParams) ? espqParams() : espqParams;
+                $log.info("*** SERVER PARAMS *** ", JSON.stringify(qParams));
+
+                var pqOptions = {
+                    WithCount: true
+                };
+
+                if (options.data && options.data.page && options.data.pageSize) {
+                    pqOptions.Page = options.data.page;
+                    pqOptions.PageSize = options.data.pageSize
+                }
+
+                esWebApiService.fetchPublicQuery(qParams.GroupID, qParams.FilterID, pqOptions, qParams.Params)
+                    .success(function(pq) {
+                        // SME CHANGE THIS ONCE WE HAVE CORRECT PQ
+
+                        if (options.data && options.data.filter && options.data.filter.filters && options.data.filter.filters.length) {
+                            $log.info("ES Filtering on ", options.data.filter.filters[0].value);
+
+                            var vVal = options.data.filter.filters[0].value;
+                            pq.Rows = _.filter(pq.Rows, function(gItem) {
+                                return gItem.Code.indexOf(vVal) > -1;
+                            }) || [];
+                        }
+
+                        if (!angular.isDefined(pq.Rows))
+                        {
+                            pq.Rows = [];
+                            pq.Count = 0;
+                        }
+
+                        if (pq.Count == -1) {
+                            pq.Count = pq.Rows ? pq.Rows.length : 0;
+                        }
+                        
+                        // END tackling
+
+                        options.success(pq);
+                        $log.info("Executed");
+                    })
+                    .error(function(err) {
+                        $log.error("Error in DataSource ", err);
+                        options.error(err);
+                    });
+            },
+
+        },
+        requestStart: function(e) {
+            $log.info("request started ", e);
+        },
+
+        schema: {
+            data: "Rows",
+            total: "Count"
+        }
+    }
+
+    if (esOptions) {
+        angular.extend(xParam, esOptions);
+    }
+
+    if (dsType && dsType === "pivot") {
+        return new kendo.data.PivotDataSource(xParam);
+    } else {
+        return new kendo.data.DataSource(xParam);
+    }
+}
 
     esWEBUI.filter('esTrustHtml', ['$sce',
         function($sce) {
@@ -66,7 +141,7 @@
             };
             return f;
         })
-        .directive('esParam', ['es.Services.WebApi', function(esWebApiService) {
+        .directive('esParam', ['es.Services.WebApi', '$log', function(esWebApiService, $log) {
             return {
                 restrict: 'AE',
                 scope: {
@@ -86,7 +161,7 @@
                 }
             };
         }])
-        .directive('esParamsPanel', function() {
+        .directive('esParamsPanel', ['$log', function($log) {
             return {
                 restrict: 'AE',
                 scope: {
@@ -94,11 +169,11 @@
                     esParamsValues: '='
                 },
                 templateUrl: function(element, attrs) {
-                    console.info("Parameter element = ", element, " Parameter attrs = ", attrs);
+                    $log.info("Parameter element = ", element, " Parameter attrs = ", attrs);
                     return "../../src/partials/esParams.html";
                 }
             };
-        });
+        }]);
 
     esWEBUI.factory("es.UI.Web.GridHelper", ['es.Services.WebApi', '$log',
         function(esWebApiService, $log) {
@@ -130,7 +205,7 @@
                     return parseInt(x.AA);
                 });
                 var z2 = _.map(z, function(x) {
-                    return jColToTCol(esGridInfo, x);
+                    return esColToKCol(esGridInfo, x);
                 });
                 return z2;
             }
@@ -236,6 +311,9 @@
                 winColToESCol: winColToESCol,
                 esColToKCol: esColToKCol,
                 esGridInfoToKInfo: esGridInfoToKInfo,
+                getZoomDataSource: prepareStdZoom,
+                getPQDataSource: prepareWebScroller
+
             });
         }
     ]);
