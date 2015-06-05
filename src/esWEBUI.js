@@ -35,6 +35,7 @@
         return new kendo.data.DataSource(xParam);
     }
 
+
     function prepareWebScroller(dsType, esWebApiService, $log, espqParams, esOptions) {
         var xParam = {
             transport: {
@@ -55,7 +56,7 @@
 
                     esWebApiService.fetchPublicQuery(qParams.GroupID, qParams.FilterID, pqOptions, qParams.Params)
                         .success(function(pq) {
-                            
+
                             if (!angular.isDefined(pq.Rows)) {
                                 pq.Rows = [];
                                 pq.Count = 0;
@@ -111,9 +112,18 @@
                     return "";
                 }
 
-                if (pParam.InvSelectedMasterTable) {
-                    if (pParam.InvSelectedMasterTable[4] == "Z") {
-                        if (pParam.MultiValued == "true") {
+                //case Enum 
+                if (pParam.enumList && (pParam.enumList.length > 1)) {
+                    if (pParam.enumOptionAll) {
+                        return "esParamMultiEnum";
+                    } else {
+                        return "esParamEnum";
+                    }
+                }
+
+                if (pParam.invSelectedMasterTable) {
+                    if (pParam.invSelectedMasterTable[4] == "Z") {
+                        if (pParam.multiValued) {
                             return "esParamMultiZoom";
                         } else {
                             return "esParamZoom";
@@ -164,17 +174,12 @@
                 template: '<div ng-include src="\'../../src/partials/\'+esType+\'.html\'"></div>',
                 link: function(scope, iElement, iAttrs) {
 
-                    scope.$watch(scope.esParamDef, function(val) {
-                        $log.info("value has changed !!!! to ", val);
-                    });
-
                     if (!scope.esParamDef) {
-                        return;
-                        //throw "You must set a param";
+                        throw "You must set a param";
                     }
 
-                    if (scope.esParamDef.InvSelectedMasterTable) {
-                        scope.esParamLookupDS = prepareStdZoom($log, scope.esParamDef.InvSelectedMasterTable, esWebApiService);
+                    if (scope.esParamDef.invSelectedMasterTable) {
+                        scope.esParamLookupDS = prepareStdZoom($log, scope.esParamDef.invSelectedMasterTable, esWebApiService);
                     }
                 }
             };
@@ -279,6 +284,97 @@
                 return esCol;
             }
 
+            function processStrToken(esParamInfo, val) {
+                if (!esParamInfo) {
+                    return val;
+                }
+
+                var ps = esParamInfo.parameterType.toLowerCase();
+                if (ps.indexOf("system.byte") != -1 || ps.indexOf("system.int")) {
+                    return parseInt(val);
+                }
+
+                if (esParamInfo.enumList && esParamInfo.enumList.length > 1) {
+                    return parseInt(val);
+                }
+
+                return val;
+            }
+
+            function winParamInfoToesParamInfo(winParamInfo, gridexInfo) {
+                if (!winParamInfo) {
+                    return null;
+                }
+
+                var esParamInfo = {
+                    id: undefined,
+                    aa: undefined,
+                    caption: undefined,
+                    toolTip: undefined,
+                    controlType: undefined,
+                    parameterType: undefined,
+                    precision: undefined,
+                    multiValued: undefined,
+                    visible: undefined,
+                    required: undefined,
+                    oDSTag: undefined,
+                    tags: undefined,
+                    visibility: undefined,
+                    invSelectedMasterTable: undefined,
+                    invSelectedMasterField: undefined,
+                    invTableMappings: undefined,
+                    defaultValues: undefined,
+                    enumOptionAll: undefined,
+                    enumList: undefined
+                };
+
+                esParamInfo.id = winParamInfo.ID;
+                esParamInfo.aa = parseInt(winParamInfo.AA);
+                esParamInfo.caption = winParamInfo.Caption;
+                esParamInfo.toolTip = winParamInfo.Tooltip;
+                esParamInfo.controlType = parseInt(winParamInfo.ControlType);
+                esParamInfo.parameterType = winParamInfo.ParameterType;
+                esParamInfo.precision = parseInt(winParamInfo.Precision);
+                esParamInfo.multiValued = winParamInfo.MultiValued == "true";
+                esParamInfo.visible = winParamInfo.Visible == "true";
+                esParamInfo.required = winParamInfo.Required == "true";
+                esParamInfo.oDSTag = winParamInfo.ODSTag;
+                esParamInfo.tags = winParamInfo.Tags;
+                esParamInfo.visibility = parseInt(winParamInfo.Visibility);
+                esParamInfo.invSelectedMasterTable = winParamInfo.InvSelectedMasterTable;
+                esParamInfo.invSelectedMasterField = winParamInfo.InvSelectedMasterField;
+                esParamInfo.invTableMappings = winParamInfo.InvTableMappings;
+
+                esParamInfo.enumOptionAll = winParamInfo.EnumOptionAll;
+                var enmList = _.sortBy(_.map(_.where(gridexInfo.EnumItem, {
+                    fParamID: esParamInfo.id
+                }), function(e) {
+                    return {
+                        text: esParamInfo.oDSTag ? e.Caption.substring(e.Caption.indexOf(".") + 1) : e.Caption,
+                        value: parseInt(e.ID)
+                    };
+                }), "value");
+
+                esParamInfo.enumList = (enmList.length) ? enmList : undefined;
+
+                var gxDef = gridexInfo.DefaultValue;
+                if (gxDef && angular.isArray(gxDef)) {
+                    var dx = _.map(_.where(gxDef, {
+                        fParamID: esParamInfo.id
+                    }), function(l) {
+                        return processStrToken(esParamInfo, l.Value);
+                    });
+                    if (dx.length >= 1) {
+                        if (dx.length == 1) {
+                            dx = dx[0];
+                        }
+                        esParamInfo.defaultValues = dx;
+                    }
+                }
+
+                return esParamInfo;
+            }
+
             function winGridInfoToESGridInfo(gridexInfo) {
                 if (!gridexInfo || !gridexInfo.LayoutColumn) {
                     return null;
@@ -302,7 +398,8 @@
                     previewRowMember: undefined,
                     previewRowLines: undefined,
                     columns: undefined,
-                    params: undefined
+                    params: undefined,
+                    defaultValues: undefined,
                 };
 
                 var z2 = _.map(gridexInfo.LayoutColumn, function(x) {
@@ -328,7 +425,20 @@
                 esGridInfo.previewRowLines = filterInfo.PreviewRowLines;
 
                 esGridInfo.columns = z2;
-                esGridInfo.params = gridexInfo.Param;
+
+                esGridInfo.params = _.map(gridexInfo.Param, function(p) {
+                    return winParamInfoToesParamInfo(p, gridexInfo);
+                });
+
+
+                var dfValues = _.reduce(_.filter(esGridInfo.params, function(p) {
+                    return (p.defaultValues);
+                }), function(st, p) {
+                    st[p.id] = p.defaultValues;
+                    return st;
+                }, {});
+                esGridInfo.defaultValues = dfValues;
+
                 return esGridInfo;
             }
 
@@ -338,7 +448,7 @@
                 esColToKCol: esColToKCol,
                 esGridInfoToKInfo: esGridInfoToKInfo,
                 getZoomDataSource: prepareStdZoom,
-                getPQDataSource: prepareWebScroller
+                getPQDataSource: prepareWebScroller,
 
             });
         }

@@ -1,0 +1,12 @@
+<div class="boxc-col">
+    <label>{{esParamDef.caption}}</label>
+   <select class="es-prm-val" 
+            kendo-drop-down-list 
+            k-data-text-field="'text'" 
+            k-data-value-field="'value'" 
+            k-auto-bind="false" 
+            k-data-source="esParamDef.enumList"
+            k-value-primitive="true"
+            k-ng-model="esParamVal[esParamDef.id]">
+    </select>
+</div>

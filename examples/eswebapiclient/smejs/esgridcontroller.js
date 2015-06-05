@@ -20,9 +20,9 @@ smeControllers.controller('esPQCtrl', ['$timeout', '$scope', '$log', 'es.Service
         };
 
         $scope.GroupID = "ESFICustomer";
-        $scope.FilterID = "CustomerList";
+        $scope.FilterID = "hka_customerlist";
         $scope.gridOptions = null;
-        $scope.pVals = {};
+        $scope.pVals = { Code: "*8", Code5: "small"};
         $scope.pqInfo = null;
 
         function onChange(arg) {
@@ -59,6 +59,8 @@ smeControllers.controller('esPQCtrl', ['$timeout', '$scope', '$log', 'es.Service
                     .success(function(ret) {
                         $timeout(function() {
                             var v = esWebGridHelper.winGridInfoToESGridInfo(ret);
+                            angular.extend($scope.pVals, v.defaultValues);
+
                             $scope.pqInfo = v;
                         }, 3000);
 
@@ -69,13 +71,13 @@ smeControllers.controller('esPQCtrl', ['$timeout', '$scope', '$log', 'es.Service
                 noty({
                     text: msg,
                     type: 'error',
-                    timeout: 3000,
+                    timeout: 100,
                     killer: true
                 });
             });
 
         $scope.execute = function() {
-            $scope.yyy.Caption = (new Date()).toString();
+            debugger;
             return;
             esWebApiService.fetchPublicQueryInfo($scope.GroupID, $scope.FilterID)
                 .success(function(ret) {
