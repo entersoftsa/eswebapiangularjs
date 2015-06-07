@@ -11,18 +11,19 @@
     <link rel="stylesheet" href="http://cdn.kendostatic.com/2015.1.429/styles/kendo.dataviz.material.min.css" />
 </head>
 
-<body ng-controller="esPQCtrl">
+<body ng-cloak ng-controller="esPQCtrl">
     <div>
-        <h4 ng-cloak>
+        <h4>
             {{pqInfo.caption}} - {{currentUser.Name}}
         </h4>
         <hr>
         <button es-analytics-on es-analytics-category="hello stavros" type="submit" ng-click="execute()">Execute</button>
     </div>
-    <div>
+    <div ng-cloak>
         <input type="text" ng-model="GroupID" class="form-control" placeholder="Entersoft Public Query Group ID" required autofocus>
         <input type="text" ng-model="FilterID" class="form-control" placeholder="Entersoft Public Query Filter ID" required>
         <textarea>{{pVals}}</textarea>
+        <label>{{pVals}}</label>
         <hr>
         <es-params-panel ng-cloak es-params-values="pVals" es-params-def="pqInfo.params"></es-params-panel>
         <hr>

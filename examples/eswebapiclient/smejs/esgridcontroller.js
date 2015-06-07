@@ -22,8 +22,15 @@ smeControllers.controller('esPQCtrl', ['$timeout', '$scope', '$log', 'es.Service
         $scope.GroupID = "ESFICustomer";
         $scope.FilterID = "hka_customerlist";
         $scope.gridOptions = null;
-        $scope.pVals = { Code: "*8", Code5: "small"};
-        $scope.pqInfo = null;
+        $scope.pVals = {
+            
+            "Inactive": null,
+            /*
+            "fRegionGroupCode": "002",
+            "CreditScaleDays": 3
+            */
+        };
+        $scope.pqInfo = {};
 
         function onChange(arg) {
             debugger;
@@ -61,8 +68,13 @@ smeControllers.controller('esPQCtrl', ['$timeout', '$scope', '$log', 'es.Service
                             var v = esWebGridHelper.winGridInfoToESGridInfo(ret);
                             angular.extend($scope.pVals, v.defaultValues);
 
+                            $scope.pVals["Inactive"] = 1;
+                            $scope.pVals["Flag1"] = 1;
+                            $scope.pVals["fRegionGroupCode"] = ["001", "003"];
+                            $scope.pVals["CreditScaleDays"] = 1;
+
                             $scope.pqInfo = v;
-                        }, 3000);
+                        }, 300);
 
                     });
             })
@@ -77,6 +89,7 @@ smeControllers.controller('esPQCtrl', ['$timeout', '$scope', '$log', 'es.Service
             });
 
         $scope.execute = function() {
+            pVals["Inactive"] = 1;
             debugger;
             return;
             esWebApiService.fetchPublicQueryInfo($scope.GroupID, $scope.FilterID)

@@ -178,6 +178,7 @@
                         throw "You must set a param";
                     }
 
+                    
                     if (scope.esParamDef.invSelectedMasterTable) {
                         scope.esParamLookupDS = prepareStdZoom($log, scope.esParamDef.invSelectedMasterTable, esWebApiService);
                     }
@@ -265,15 +266,17 @@
 
                 //Enum Column
                 if (jCol.EditType == "5") {
-                    var l1 = _.sortBy(_.where(gridexInfo.ValueList, {
-                        ColName: jCol.ColName
+                    var l1 = _.sortBy(_.filter(gridexInfo.ValueList, function(x) {
+                        var v = x.ColName == jCol.ColName;
+                        v = v && (typeof x.Value != 'undefined');
+                        return v;
                     }), function(x) {
-                        return parseInt(x.Value);
+                        return !isNaN(x.Value) ? parseInt(x.Calue) : null;
                     });
                     var l2 = _.map(l1, function(x) {
                         return {
                             text: x.Caption,
-                            value: parseInt(x.Value)
+                            value: angular.isNumber(x.Value) ? parseInt(x.Calue) : null
                         };
                     });
 
@@ -290,7 +293,7 @@
                 }
 
                 var ps = esParamInfo.parameterType.toLowerCase();
-                if (ps.indexOf("system.byte") != -1 || ps.indexOf("system.int")) {
+                if (ps.indexOf("system.byte") != -1 || ps.indexOf("system.int") != -1) {
                     return parseInt(val);
                 }
 
@@ -346,12 +349,12 @@
                 esParamInfo.invTableMappings = winParamInfo.InvTableMappings;
 
                 esParamInfo.enumOptionAll = winParamInfo.EnumOptionAll;
-                var enmList = _.sortBy(_.map(_.where(gridexInfo.EnumItem, {
-                    fParamID: esParamInfo.id
+                var enmList = _.sortBy(_.map(_.filter(gridexInfo.EnumItem, function(x){
+                    return x.fParamID == esParamInfo.id && (typeof x.ID != 'undefined');
                 }), function(e) {
                     return {
                         text: esParamInfo.oDSTag ? e.Caption.substring(e.Caption.indexOf(".") + 1) : e.Caption,
-                        value: parseInt(e.ID)
+                        value: !isNaN(e.ID) ? parseInt(e.ID) : null
                     };
                 }), "value");
 
@@ -432,7 +435,7 @@
 
 
                 var dfValues = _.reduce(_.filter(esGridInfo.params, function(p) {
-                    return (p.defaultValues);
+                    return typeof p.defaultValues != 'undefined';
                 }), function(st, p) {
                     st[p.id] = p.defaultValues;
                     return st;
