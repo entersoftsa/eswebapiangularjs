@@ -98,26 +98,8 @@ smeControllers.controller('esPQCtrl', ['$scope', '$log', 'es.Services.WebApi', '
                         }
                     }, kdsoptions);
 
-                    /*
-                    grdopt.excelExport = function(e) {
-                        e.workbook.fileName += "sme-";
-                    };
-
-                    // hook test
-                    //grdopt.dataSource.aggregate = [{field: "NumericField1", aggregate: "count"}];
-                    // end test
-                    */
-
                     grdopt.columns = esWebGridHelper.esGridInfoToKInfo(esWebGridHelper.winGridInfoToESGridInfo(ret));
-                    $scope.gridOptions = grdopt;
-                    if (reBuild) {
-                        $scope.xCount += 1;
-                        $log.info("Rebuilding ", $scope.xCount);
-                    }
-
-
-                    $log.info('OK! ');
-
+                    $scope.esGridOptions = grdopt;
                 });
         }
     }

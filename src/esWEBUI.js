@@ -137,31 +137,64 @@
             };
             return f;
         })
-        .directive('esGrid', ['es.Services.WebApi', '$log', function(esWebApiService, $log) {
+        .directive('esGrid', ['es.Services.WebApi', 'es.UI.Web.GridHelper', '$log', function(esWebApiService, esWebGridHelper, $log) {
             return {
                 restrict: 'AE',
                 scope: {
-                    esGroupID: "=",
-                    esFilterID: "=",
+                    esGroupId: "=",
+                    esFilterId: "=",
                     esExecuteParams: "=",
-                    esGridInfo: "=",
                     esGridOptions: "=",
-                    esServerOptions: "="
                 },
                 templateUrl: function(element, attrs) {
                     $log.info("Parameter element = ", element, " Parameter attrs = ", attrs);
                     return "../../src/partials/esGrid.html";
                 },
                 link: function(scope, iElement, iAttrs) {
-                    if (!scope.esParamDef) {
-                        throw "You must set a param";
+                    if (!scope.esGroupId || !scope.esFilterId) {
+                        throw "You must set GroupID and FilterID for esgrid to work";
                     }
 
-                    if (scope.esParamDef.InvSelectedMasterTable) {
-                        scope.myDS = prepareStdZoom($log, scope.esParamDef.InvSelectedMasterTable, esWebApiService);
-                    }
+                    esWebApiService.fetchPublicQueryInfo(scope.esGroupId, scope.esFilterId)
+                        .success(function(ret) {
+                            var grdopt = {
+                                pageable: true,
+                                sortable: true,
+                                filterable: true,
+                                resizable: true,
+                                toolbar: ["excel"],
+                                excel: {
+                                    allPages: true,
+                                    fileName: scope.esGroupId + "-" + scope.esFilterId + ".xlsx",
+                                    filterable: true
+                                }
+                            };
+
+                            var kdsoptions = {
+                                serverFiltering: true,
+                                serverPaging: true,
+                                pageSize: 20
+                            };
+
+                            grdopt.dataSource = esWebGridHelper.getPQDataSource(null, esWebApiService, $log, function() {
+                                return {
+                                    GroupID: scope.esGroupId,
+                                    FilterID: scope.esFilterId,
+                                    Params: scope.esExecuteParams
+                                }
+                            }, kdsoptions);
+
+                            var p1 = ret;
+                            var p2 = esWebGridHelper.winGridInfoToESGridInfo(scope.esGroupId, scope.esFilterId, p1);
+                            var p3 = esWebGridHelper.esGridInfoToKInfo(p2);
+
+                            grdopt.columns = p3;
+                            debugger;
+                            scope.esGridOptions = grdopt;
+
+                        });
                 }
-            }
+            };
         }])
         .directive('esParam', ['es.Services.WebApi', '$log', function(esWebApiService, $log) {
             return {
@@ -178,7 +211,7 @@
                         throw "You must set a param";
                     }
 
-                    
+
                     if (scope.esParamDef.invSelectedMasterTable) {
                         scope.esParamLookupDS = prepareStdZoom($log, scope.esParamDef.invSelectedMasterTable, esWebApiService);
                     }
@@ -240,7 +273,7 @@
                 return z2;
             }
 
-            function winColToESCol(gridexInfo, jCol) {
+            function winColToESCol(inGroupID, inFilterID, gridexInfo, jCol) {
                 var esCol = {
                     AA: undefined,
                     field: undefined,
@@ -269,14 +302,15 @@
                     var l1 = _.sortBy(_.filter(gridexInfo.ValueList, function(x) {
                         var v = x.ColName == jCol.ColName;
                         v = v && (typeof x.Value != 'undefined');
+                        v = v && x.fFilterID == inFilterID;
                         return v;
                     }), function(x) {
-                        return !isNaN(x.Value) ? parseInt(x.Calue) : null;
+                        return !isNaN(x.Value) ? parseInt(x.Value) : null;
                     });
                     var l2 = _.map(l1, function(x) {
                         return {
                             text: x.Caption,
-                            value: angular.isNumber(x.Value) ? parseInt(x.Calue) : null
+                            value: angular.isNumber(x.Value) ? parseInt(x.Value) : null
                         };
                     });
 
@@ -349,7 +383,7 @@
                 esParamInfo.invTableMappings = winParamInfo.InvTableMappings;
 
                 esParamInfo.enumOptionAll = winParamInfo.EnumOptionAll;
-                var enmList = _.sortBy(_.map(_.filter(gridexInfo.EnumItem, function(x){
+                var enmList = _.sortBy(_.map(_.filter(gridexInfo.EnumItem, function(x) {
                     return x.fParamID == esParamInfo.id && (typeof x.ID != 'undefined');
                 }), function(e) {
                     return {
@@ -378,7 +412,7 @@
                 return esParamInfo;
             }
 
-            function winGridInfoToESGridInfo(gridexInfo) {
+            function winGridInfoToESGridInfo(inGroupID, inFilterID, gridexInfo) {
                 if (!gridexInfo || !gridexInfo.LayoutColumn) {
                     return null;
                 }
@@ -405,11 +439,16 @@
                     defaultValues: undefined,
                 };
 
-                var z2 = _.map(gridexInfo.LayoutColumn, function(x) {
-                    return winColToESCol(gridexInfo, x);
+                var z2 = _.map(_.where(gridexInfo.LayoutColumn, {fFilterID: inFilterID}), function(x) {
+                    return winColToESCol(inGroupID, inFilterID, gridexInfo, x);
                 });
 
-                var filterInfo = gridexInfo.Filter[0];
+                var filterInfo = _.where(gridexInfo.Filter, { ID: inFilterID });
+                if (!filterInfo || filterInfo.length != 1) {
+                    return null;
+                }
+
+                filterInfo = filterInfo[0];
                 esGridInfo.id = filterInfo.ID;
                 esGridInfo.caption = filterInfo.Caption;
                 esGridInfo.rootTable = filterInfo.RootTable;
