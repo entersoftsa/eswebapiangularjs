@@ -155,57 +155,15 @@
                         throw "You must set GroupID and FilterID for esgrid to work";
                     }
 
-                    var kdsoptions = {
-                        serverFiltering: true,
-                        serverPaging: true,
-                        pageSize: 20
-                    };
 
                     if (!scope.esGridOptions) {
                         // Now esGridOption explicitly assigned so ask the server 
                         esWebApiService.fetchPublicQueryInfo(scope.esGroupId, scope.esFilterId)
                             .success(function(ret) {
-                                var grdopt = {
-                                    pageable: true,
-                                    sortable: true,
-                                    filterable: true,
-                                    resizable: true,
-                                    toolbar: ["excel"],
-                                    excel: {
-                                        allPages: true,
-                                        fileName: scope.esGroupId + "-" + scope.esFilterId + ".xlsx",
-                                        filterable: true
-                                    }
-                                };
-
                                 var p1 = ret;
                                 var p2 = esWebGridHelper.winGridInfoToESGridInfo(scope.esGroupId, scope.esFilterId, p1);
-                                var p3 = esWebGridHelper.esGridInfoToKInfo(p2);
-                                grdopt.columns = p3.columns;
-
-                                grdopt.dataSource = esWebGridHelper.getPQDataSource(null, esWebApiService, $log, function() {
-                                    return {
-                                        GroupID: scope.esGroupId,
-                                        FilterID: scope.esFilterId,
-                                        Params: scope.esExecuteParams
-                                    }
-                                }, kdsoptions);
-
-                                scope.esGridOptions = grdopt;
+                                scope.esGridOptions = esWebGridHelper.esGridInfoToKInfo(esWebApiService, scope.esGroupID, scope.esFilterID, scope.esExecuteParams, p2);
                             });
-                    } else {
-                        /*
-                        if (!scope.esGridOptions.dataSource) {
-                            scope.esGridOptions.dataSource = esWebGridHelper.getPQDataSource(null, esWebApiService, $log, function() {
-                                return {
-                                    GroupID: scope.esGroupId,
-                                    FilterID: scope.esFilterId,
-                                    Params: scope.esExecuteParams
-                                }
-                            }, kdsoptions);
-                            scope.esGridOptions.rebind = 1;
-                        }
-                        */
                     }
                 }
             };
@@ -271,8 +229,37 @@
                 return tCol;
             }
 
-            function esGridInfoToKInfo(esGridInfo) {
-                return esGridInfo;
+            function esGridInfoToKInfo(esWebApiService, esGroupId, esFilterId, executeParams, esGridInfo) {
+                var grdopt = {
+                    pageable: true,
+                    sortable: true,
+                    filterable: true,
+                    resizable: true,
+                    toolbar: ["excel"],
+                    excel: {
+                        allPages: true,
+                        fileName: esGroupId + "-" + esFilterId + ".xlsx",
+                        filterable: true
+                    }
+                };
+
+                var kdsoptions = {
+                    serverFiltering: true,
+                    serverPaging: true,
+                    pageSize: 20
+                };
+
+                grdopt.columns = esGridInfo.columns;
+
+                grdopt.dataSource = prepareWebScroller(null, esWebApiService, $log, function() {
+                    return {
+                        GroupID: esGroupId,
+                        FilterID: esFilterId,
+                        Params: executeParams
+                    }
+                }, kdsoptions);
+
+                return grdopt;
             }
 
             function winColToESCol(inGroupID, inFilterID, gridexInfo, jCol) {

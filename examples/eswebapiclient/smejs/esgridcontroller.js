@@ -21,7 +21,7 @@ smeControllers.controller('esPQCtrl', ['$timeout', '$scope', '$log', 'es.Service
 
         $scope.GroupID = "ESFICustomer";
         $scope.FilterID = "hka_customerlist";
-        $scope.gridOptions = null;
+        //$scope.gridOptions = null;
         $scope.pVals = {};
         $scope.pqInfo = {};
 
@@ -61,22 +61,8 @@ smeControllers.controller('esPQCtrl', ['$timeout', '$scope', '$log', 'es.Service
                             var v = esWebGridHelper.winGridInfoToESGridInfo($scope.GroupID, $scope.FilterID, ret);
                             angular.extend($scope.pVals, v.defaultValues);
 
-                            var kdsoptions = {
-                                serverFiltering: true,
-                                serverPaging: true,
-                                pageSize: 20
-                            };
-                            var grdopt = esWebGridHelper.esGridInfoToKInfo(v);
-
-                            grdopt.dataSource = esWebGridHelper.getPQDataSource(null, esWebApiService, $log, function() {
-                                return {
-                                    GroupID: $scope.GroupID,
-                                    FilterID: $scope.FilterID,
-                                    Params: $scope.pVals
-                                }
-                            }, kdsoptions);
-
-                            $scope.pqInfo = grdopt;
+                            $scope.gridOptions = esWebGridHelper.esGridInfoToKInfo(esWebApiService, $scope.GroupID, $scope.FilterID, $scope.pVals, v);
+                            $scope.pqInfo = v;
                         }, 300);
 
                     });
