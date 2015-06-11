@@ -112,6 +112,14 @@
                     return "";
                 }
 
+                var pt = pParam.parameterType.toLowerCase()
+
+                //ESNumeric
+                if (pt.indexOf("entersoft.framework.platform.esnumeric") == 0) {
+                    return "esAdvancedNumeric";
+                }
+
+
                 //case Enum 
                 if (pParam.enumList && (pParam.enumList.length > 1)) {
                     if (pParam.enumOptionAll) {
@@ -156,13 +164,13 @@
                     }
 
 
-                    if (!scope.esGridOptions) {
+                    if (!scope.esGridOptions && !iAttrs.esGridOptions) {
                         // Now esGridOption explicitly assigned so ask the server 
                         esWebApiService.fetchPublicQueryInfo(scope.esGroupId, scope.esFilterId)
                             .success(function(ret) {
                                 var p1 = ret;
                                 var p2 = esWebGridHelper.winGridInfoToESGridInfo(scope.esGroupId, scope.esFilterId, p1);
-                                scope.esGridOptions = esWebGridHelper.esGridInfoToKInfo(esWebApiService, scope.esGroupID, scope.esFilterID, scope.esExecuteParams, p2);
+                                scope.esGridOptions = esWebGridHelper.esGridInfoToKInfo(esWebApiService, scope.esGroupId, scope.esFilterId, scope.esExecuteParams, p2);
                             });
                     }
                 }
@@ -310,6 +318,21 @@
                 return esCol;
             }
 
+            function esEval(expr)
+            {
+                var GE = "1";
+                var LT = "2";
+                return eval(expr);
+            }
+
+            function ESNumeric(oper, val)
+            {
+                return {
+                    esFunc: "ESNumeric",
+                    esOper: oper,
+                    esVal: !isNaN(val) ? parseInt(val) : null
+                };
+            }
             function processStrToken(esParamInfo, val) {
                 if (!esParamInfo) {
                     return val;
@@ -322,6 +345,10 @@
 
                 if (esParamInfo.enumList && esParamInfo.enumList.length > 1) {
                     return parseInt(val);
+                }
+
+                if (ps.indexOf("entersoft.framework.platform.esnumeric") == 0) {
+                    return esEval(val);
                 }
 
                 return val;

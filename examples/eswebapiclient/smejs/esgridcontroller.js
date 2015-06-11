@@ -11,7 +11,7 @@ smeControllers.controller('esPQCtrl', ['$timeout', '$scope', '$log', 'es.Service
     function($timeout, $scope, $log, esWebApiService, esWebGridHelper, _, cache, esMessaging) {
 
         $scope.currentUser = {};
-
+        $scope.gridOptions = null;
         $scope.credentials = {
             UserID: 'sme',
             Password: '1234',
@@ -78,42 +78,8 @@ smeControllers.controller('esPQCtrl', ['$timeout', '$scope', '$log', 'es.Service
             });
 
         $scope.execute = function() {
-            debugger;
-            $scope.pqInfo.rebind += 1;
-            return;
-            esWebApiService.fetchPublicQueryInfo($scope.GroupID, $scope.FilterID)
-                .success(function(ret) {
-                    var grdopt = {
-                        pageable: true,
-                        sortable: true,
-                        filterable: true,
-                        resizable: true,
-                        toolbar: ["excel"],
-                        excel: {
-                            allPages: true,
-                            fileName: $scope.GroupID + "-" + $scope.FilterID + ".xlsx",
-                            filterable: true
-                        }
-                    };
-
-                    var kdsoptions = {
-                        serverFiltering: true,
-                        serverPaging: true,
-                        pageSize: 20
-                    };
-
-                    grdopt.dataSource = esWebGridHelper.getPQDataSource(null, esWebApiService, $log, function() {
-                        return {
-                            GroupID: $scope.GroupID,
-                            FilterID: $scope.FilterID,
-                            Params: $scope.pVals
-                        }
-                    }, kdsoptions);
-
-                    grdopt.columns = esWebGridHelper.esGridInfoToKInfo(esWebGridHelper.winGridInfoToESGridInfo(ret));
-                    $scope.gridOptions = grdopt;
-                    $log.info('OK! ');
-                });
+            $scope.gridOptions.dataSource.read();
+            $log.info("Requery");
         }
     }
 
