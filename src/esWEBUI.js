@@ -145,7 +145,7 @@
             };
             return f;
         })
-        .directive('esGrid', ['es.Services.WebApi', 'es.UI.Web.GridHelper', '$log', function(esWebApiService, esWebGridHelper, $log) {
+        .directive('esGrid', ['es.Services.WebApi', 'es.UI.Web.UIHelper', '$log', function(esWebApiService, esWebUIHelper, $log) {
             return {
                 restrict: 'AE',
                 scope: {
@@ -169,14 +169,14 @@
                         esWebApiService.fetchPublicQueryInfo(scope.esGroupId, scope.esFilterId)
                             .success(function(ret) {
                                 var p1 = ret;
-                                var p2 = esWebGridHelper.winGridInfoToESGridInfo(scope.esGroupId, scope.esFilterId, p1);
-                                scope.esGridOptions = esWebGridHelper.esGridInfoToKInfo(esWebApiService, scope.esGroupId, scope.esFilterId, scope.esExecuteParams, p2);
+                                var p2 = esWebUIHelper.winGridInfoToESGridInfo(scope.esGroupId, scope.esFilterId, p1);
+                                scope.esGridOptions = esWebUIHelper.esGridInfoToKInfo(esWebApiService, scope.esGroupId, scope.esFilterId, scope.esExecuteParams, p2);
                             });
                     }
                 }
             };
         }])
-        .directive('esParam', ['es.Services.WebApi', '$log', function(esWebApiService, $log) {
+        .directive('esParam', ['es.Services.WebApi', 'es.UI.Web.UIHelper', '$log', function(esWebApiService, esWebUIHelper, $log) {
             return {
                 restrict: 'AE',
                 scope: {
@@ -191,6 +191,8 @@
                         throw "You must set a param";
                     }
 
+                    scope.esWebUIHelper = esWebUIHelper;
+                    scope.esWebApiService = esWebApiService;
 
                     if (scope.esParamDef.invSelectedMasterTable) {
                         scope.esParamLookupDS = prepareStdZoom($log, scope.esParamDef.invSelectedMasterTable, esWebApiService);
@@ -218,7 +220,7 @@
             };
         }]);
 
-    esWEBUI.factory("es.UI.Web.GridHelper", ['es.Services.WebApi', '$log',
+    esWEBUI.factory("es.UI.Web.UIHelper", ['es.Services.WebApi', '$log',
         function(esWebApiService, $log) {
 
             function esColToKCol(esGridInfo, esCol) {
@@ -318,21 +320,44 @@
                 return esCol;
             }
 
-            function esEval(expr)
-            {
-                var GE = "1";
-                var LT = "2";
+            var esNumericOptions = [{
+                caption: "=",
+                val: "EQ"
+            }, {
+                caption: ">=",
+                val: "GE"
+            }, {
+                caption: ">",
+                val: "GT"
+            }, {
+                caption: "<=",
+                val: "LE"
+            }, {
+                caption: "<",
+                val: "LT"
+            }, {
+                caption: "<>",
+                val: "NE"
+            }];
+
+            function esEval(expr) {
+                var EQ = esNumericOptions[0];
+                var GE = esNumericOptions[1];
+                var GT = esNumericOptions[2];
+                var LE = esNumericOptions[3];
+                var LT = esNumericOptions[4];
+                var NE = esNumericOptions[5];
                 return eval(expr);
             }
 
-            function ESNumeric(oper, val)
-            {
+            function ESNumeric(oper, val) {
                 return {
                     esFunc: "ESNumeric",
-                    esOper: oper,
+                    esOper: oper.val,
                     esVal: !isNaN(val) ? parseInt(val) : null
                 };
             }
+
             function processStrToken(esParamInfo, val) {
                 if (!esParamInfo) {
                     return val;
@@ -522,6 +547,7 @@
                 esGridInfoToKInfo: esGridInfoToKInfo,
                 getZoomDataSource: prepareStdZoom,
                 getPQDataSource: prepareWebScroller,
+                getesNumericOptions: function() { return esNumericOptions; },
 
             });
         }

@@ -7,8 +7,8 @@ var smeControllers = angular.module('smeControllers', ['kendo.directives', 'unde
 
 
 
-smeControllers.controller('esPQCtrl', ['$timeout', '$scope', '$log', 'es.Services.WebApi', 'es.UI.Web.GridHelper', '_', 'es.Services.Cache', 'es.Services.Messaging',
-    function($timeout, $scope, $log, esWebApiService, esWebGridHelper, _, cache, esMessaging) {
+smeControllers.controller('esPQCtrl', ['$timeout', '$scope', '$log', 'es.Services.WebApi', 'es.UI.Web.UIHelper', '_', 'es.Services.Cache', 'es.Services.Messaging',
+    function($timeout, $scope, $log, esWebApiService, esWebUIHelper, _, cache, esMessaging) {
 
         $scope.currentUser = {};
         $scope.gridOptions = null;
@@ -58,10 +58,10 @@ smeControllers.controller('esPQCtrl', ['$timeout', '$scope', '$log', 'es.Service
                 esWebApiService.fetchPublicQueryInfo($scope.GroupID, $scope.FilterID)
                     .success(function(ret) {
                         $timeout(function() {
-                            var v = esWebGridHelper.winGridInfoToESGridInfo($scope.GroupID, $scope.FilterID, ret);
+                            var v = esWebUIHelper.winGridInfoToESGridInfo($scope.GroupID, $scope.FilterID, ret);
                             angular.extend($scope.pVals, v.defaultValues);
 
-                            $scope.gridOptions = esWebGridHelper.esGridInfoToKInfo(esWebApiService, $scope.GroupID, $scope.FilterID, $scope.pVals, v);
+                            $scope.gridOptions = esWebUIHelper.esGridInfoToKInfo(esWebApiService, $scope.GroupID, $scope.FilterID, $scope.pVals, v);
                             $scope.pqInfo = v;
                         }, 300);
 

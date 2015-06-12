@@ -1,14 +1,13 @@
 <div class="es-prm">
-	<label class="es-prm-label">{{esParamDef.caption}}</label> 
-		<div class="es-prm-val">
-			<select ng-model="esParamVal[esParamDef.id].esOper">
-				<option value="1">GE</option>
-				<option value="2">GT</option>
-				<option value="3">EQ</option>
-				<option value="4">LT</option>
-				<option value="5">LE</option>
-			</select>
-			<input  type="text" ng-model="esParamVal[esParamDef.id].esVal"/>
-		</div>
+    <label class="es-prm-label">{{esParamDef.caption}}</label>
+    <div class="es-prm-val">
+        <select ng-options="item.val as item.caption for item in esWebUIHelper.getesNumericOptions()" ng-model="esParamVal[esParamDef.id].esOper">
+        </select>
+        <input kendo-numeric-text-box 
+        	align="right" 
+        	k-ng-model="esParamVal[esParamDef.id].esVal" 
+        	k-spinners="false" 
+        	k-decimals="esParamDef.precision" 
+        	k-format="'n'+'{{esParamDef.precision}}'" />
+    </div>
 </div>
-

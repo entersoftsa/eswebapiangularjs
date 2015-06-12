@@ -7,8 +7,8 @@ var smeControllers = angular.module('smeControllers', ['kendo.directives', 'unde
 
 
 
-smeControllers.controller('esPQCtrl', ['$scope', '$log', 'es.Services.WebApi', 'es.UI.Web.GridHelper',  '_', 'es.Services.Cache', 'es.Services.Messaging',
-    function($scope, $log, esWebApiService, esWebGridHelper, _, cache, esMessaging) {
+smeControllers.controller('esPQCtrl', ['$scope', '$log', 'es.Services.WebApi', 'es.UI.Web.UIHelper',  '_', 'es.Services.Cache', 'es.Services.Messaging',
+    function($scope, $log, esWebApiService, esWebUIHelper, _, cache, esMessaging) {
 
         $scope.currentUser = {};
 
@@ -90,7 +90,7 @@ smeControllers.controller('esPQCtrl', ['$scope', '$log', 'es.Services.WebApi', '
                         pageSize: 20
                     };
 
-                    grdopt.dataSource = esWebGridHelper.getPQDataSource(null, esWebApiService, $log, function() {
+                    grdopt.dataSource = esWebUIHelper.getPQDataSource(null, esWebApiService, $log, function() {
                         return {
                             GroupID: $scope.GroupID,
                             FilterID: $scope.FilterID,
@@ -98,7 +98,7 @@ smeControllers.controller('esPQCtrl', ['$scope', '$log', 'es.Services.WebApi', '
                         }
                     }, kdsoptions);
 
-                    grdopt.columns = esWebGridHelper.esGridInfoToKInfo(esWebGridHelper.winGridInfoToESGridInfo(ret));
+                    grdopt.columns = esWebUIHelper.esGridInfoToKInfo(esWebUIHelper.winGridInfoToESGridInfo(ret));
                     $scope.esGridOptions = grdopt;
                 });
         }
