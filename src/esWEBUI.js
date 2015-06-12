@@ -340,9 +340,64 @@
                 val: "NE"
             }];
 
-            function esEval(expr) {
+            function ESParamVal(paramId, paramVal) {
+                this[paramId] = paramVal;
+                //this.paramVal = paramVal;
+            }
+
+            ESParamVal.prototype.getExecuteVal = function() {
+                return this.paramVal;
+            };
+
+
+            function ESNumericParamVal(paramId, paramVal, paramOper) {
+                //call super constructor
+                ESParamVal.call(this, paramId, paramVal);
+                this.paramOper = paramOper;
+            }
+
+            //inherit from ESParamval SuperClass
+            ESNumericParamVal.prototype = Object.create(ESParamVal.prototype);
+
+
+            ESNumericParamVal.prototype.getExecuteVal = function() {
+                /*
+                ESParamVal.prototype.getExecuteVal.apply(this, arguments);
+                console.log('augmenting pattern');
+                */
+                return "ESNumeric(" + this.paramOper + ", '" + this.paramVal + "')";
+            }
+
+
+
+            function ESParamValues(initialArray) {
+                if (!initialArray || !angular.isArray(initialArray) || initialArray.length ==0) {
+                    this.pVals = [];
+                } else {
+                    this.pVals = initialArray;
+                }
+            }
+
+            ESParamValues.prototype.setParamValues = function(vals) {
+                if (!vals || !_.isArray(vals) || vals.length == 0) {
+                    this.pVals = [];
+                    return;
+                }
+                this.pVals = vals;
+            }
+
+            ESParamValues.prototype.getExecuteVals = function() {
+                console.log("pvals = ", JSON.stringify(this.pVals));
+                var v = _.reduce(this.pVals, function(st, p) {
+                    st[p.paramId] = p.getExecuteVal();
+                    return st;
+                }, {});
+                return v;
+            }
+
+            function esEval(pInfo, expr) {
                 var EQ = esNumericOptions[0];
-                var GE = esNumericOptions[1];
+                var GE = {oper: esNumericOptions[1], paramID: pInfo.id};
                 var GT = esNumericOptions[2];
                 var LE = esNumericOptions[3];
                 var LT = esNumericOptions[4];
@@ -351,11 +406,26 @@
             }
 
             function ESNumeric(oper, val) {
-                return {
-                    esFunc: "ESNumeric",
-                    esOper: oper.val,
-                    esVal: !isNaN(val) ? parseInt(val) : null
-                };
+                return new ESNumericParamVal(oper.paramID, !isNaN(val) ? parseInt(val) : null, oper.oper);
+            }
+
+            function getEsParamVal(esParamInfo, dx) {
+                var ps = esParamInfo.parameterType.toLowerCase();
+                if (ps.indexOf("entersoft.framework.platform.esnumeric") == 0) {
+                    if (dx.length != 1) {
+                        throw new Error("Invalid number of default values in ESNumeric Param [" + esParamInfo.id + "]");
+                    }
+                    return esEval(esParamInfo, dx[0].Value);
+                }
+
+                var processedVals = _.map(dx, function(k) {
+                    return processStrToken(esParamInfo, k.Value);
+                });
+
+                if (processedVals.length == 1) {
+                    processedVals = processedVals[0];
+                }
+                return new ESParamVal(esParamInfo.id, processedVals);
             }
 
             function processStrToken(esParamInfo, val) {
@@ -370,10 +440,6 @@
 
                 if (esParamInfo.enumList && esParamInfo.enumList.length > 1) {
                     return parseInt(val);
-                }
-
-                if (ps.indexOf("entersoft.framework.platform.esnumeric") == 0) {
-                    return esEval(val);
                 }
 
                 return val;
@@ -435,6 +501,7 @@
 
                 esParamInfo.enumList = (enmList.length) ? enmList : undefined;
 
+                /*
                 var gxDef = gridexInfo.DefaultValue;
                 if (gxDef && angular.isArray(gxDef)) {
                     var dx = _.map(_.where(gxDef, {
@@ -447,6 +514,20 @@
                             dx = dx[0];
                         }
                         esParamInfo.defaultValues = dx;
+                    }
+                }
+                */
+
+                var gxDef = gridexInfo.DefaultValue;
+                if (gxDef && angular.isArray(gxDef)) {
+                    var dx = _.where(gxDef, {
+                        fParamID: esParamInfo.id
+                    });
+
+                    if (dx.length >= 1) {
+                        esParamInfo.defaultValues = getEsParamVal(esParamInfo, dx);
+                    } else {
+                        esParamInfo.defaultValues = new ESParamVal(esParamInfo.id, null);
                     }
                 }
 
@@ -529,14 +610,11 @@
                 });
 
 
-                var dfValues = _.reduce(_.filter(esGridInfo.params, function(p) {
-                    return typeof p.defaultValues != 'undefined';
-                }), function(st, p) {
-                    st[p.id] = p.defaultValues;
-                    return st;
-                }, {});
-                esGridInfo.defaultValues = dfValues;
+                var dfValues = _.map(esGridInfo.params, function(p) {
+                    return p.defaultValues;
+                });
 
+                esGridInfo.defaultValues = new ESParamValues(dfValues);
                 return esGridInfo;
             }
 
@@ -547,7 +625,9 @@
                 esGridInfoToKInfo: esGridInfoToKInfo,
                 getZoomDataSource: prepareStdZoom,
                 getPQDataSource: prepareWebScroller,
-                getesNumericOptions: function() { return esNumericOptions; },
+                getesNumericOptions: function() {
+                    return esNumericOptions;
+                },
 
             });
         }

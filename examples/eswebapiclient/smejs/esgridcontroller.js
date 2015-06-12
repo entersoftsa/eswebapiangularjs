@@ -22,7 +22,7 @@ smeControllers.controller('esPQCtrl', ['$timeout', '$scope', '$log', 'es.Service
         $scope.GroupID = "ESFICustomer";
         $scope.FilterID = "hka_customerlist";
         //$scope.gridOptions = null;
-        $scope.pVals = {};
+        $scope.pVals = undefined;
         $scope.pqInfo = {};
 
         function onChange(arg) {
@@ -59,7 +59,8 @@ smeControllers.controller('esPQCtrl', ['$timeout', '$scope', '$log', 'es.Service
                     .success(function(ret) {
                         $timeout(function() {
                             var v = esWebUIHelper.winGridInfoToESGridInfo($scope.GroupID, $scope.FilterID, ret);
-                            angular.extend($scope.pVals, v.defaultValues);
+                            $scope.pVals = v.defaultValues;
+                            //angular.extend($scope.pVals, v.defaultValues);
 
                             $scope.gridOptions = esWebUIHelper.esGridInfoToKInfo(esWebApiService, $scope.GroupID, $scope.FilterID, $scope.pVals, v);
                             $scope.pqInfo = v;
