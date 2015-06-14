@@ -2,12 +2,131 @@
     'use strict';
     var esWEBUI = angular.module('es.Web.UI', []);
 
+    var esComplexParamFunctionOptions = [{
+        caption: "=",
+        value: "EQ"
+    }, {
+        caption: "<>",
+        value: "NE"
+    }, {
+        caption: "<",
+        value: "LT"
+    }, {
+        caption: "<=",
+        value: "LE"
+    }, {
+        caption: ">",
+        value: "GT"
+    }, {
+        caption: ">=",
+        value: "GE"
+    }, {
+        caption: "...<=...<=...",
+        value: "RANGE"
+    }, {
+        caption: "Empty",
+        value: "NULL"
+    }, {
+        caption: "Not Empty",
+        value: "NOTNULL"
+    }];
+
+    function ESParamVal(paramId, paramVal) {
+        this.paramCode = paramId;
+        this.paramValue = paramVal;
+    }
+
+    ESParamVal.prototype.getExecuteVal = function() {
+        return this.paramValue;
+    };
+
+
+    function ESNumericParamVal(paramId, paramVal) {
+        //call super constructor
+        ESParamVal.call(this, paramId, paramVal);
+    }
+
+    //inherit from ESParamval SuperClass
+    ESNumericParamVal.prototype = Object.create(ESParamVal.prototype);
+
+
+    ESNumericParamVal.prototype.getExecuteVal = function() {
+        switch (this.paramValue.oper)
+        {
+            case "RANGE":
+                return "ESNumeric(" + this.paramValue.oper + ", '" + this.paramValue.value + "', '" + this.paramValue.valueTo + "')";
+            case "NULL":
+            case "NOTNULL":
+                return "ESNumeric(" + this.paramValue.oper + ", '0')";   
+            default:
+                return "ESNumeric(" + this.paramValue.oper + ", '" + this.paramValue.value + "')";
+        }
+    }
+
+    function ESStringParamVal(paramId, paramVal) {
+        //call super constructor
+        ESParamVal.call(this, paramId, paramVal);
+    }
+
+    //inherit from ESParamval SuperClass
+    ESStringParamVal.prototype = Object.create(ESParamVal.prototype);
+
+
+    ESStringParamVal.prototype.getExecuteVal = function() {
+        switch (this.paramValue.oper)
+        {
+            case "EQ":
+            {
+                if (!this.paramValue.value) {
+                    return null;
+                }
+            }
+            case "RANGE":
+                return "ESString(" + this.paramValue.oper + ", '" + this.paramValue.value + "', '" + this.paramValue.valueTo + "')";
+            case "NULL":
+            case "NOTNULL":
+                return "ESString(" + this.paramValue.oper + ", '')";   
+            default:
+                return "ESString(" + this.paramValue.oper + ", '" + this.paramValue.value + "')";
+        }
+    }
+
+
+    function ESParamValues(vals) {
+        this.setParamValues(vals);
+    }
+
+    ESParamValues.prototype.setParamValues = function(vals) {
+
+        if (!vals || !_.isArray(vals) || vals.length == 0) {
+            return;
+        }
+
+        var x = this;
+        vals.forEach(function(element, index, array) {
+            x[element.paramCode] = element;
+        });
+    }
+
+    ESParamValues.prototype.getExecuteVals = function() {
+        var x = this;
+        var v = _.reduce(Object.getOwnPropertyNames(x), function(st, pName) {
+            var p = x[pName];
+
+            if (p.paramValue) {
+                st[p.paramCode] = p.getExecuteVal();
+            }
+            return st;
+        }, {});
+        return v;
+    }
+
     function prepareStdZoom($log, zoomID, esWebApiService) {
         var xParam = {
             transport: {
                 read: function(options) {
 
-                    $log.info("*** SERVER EXECUTION *** ", JSON.stringify(options));
+                    $log.info("FETCHing ZOOM data for [", zoomID, "] with options ", JSON.stringify(options));
 
                     var pqOptions = {};
                     esWebApiService.fetchStdZoom(zoomID, pqOptions)
@@ -19,7 +138,7 @@
                             // END tackling
 
                             options.success(pq);
-                            $log.info("Executed");
+                            $log.info("FETCHed ZOOM data for [", zoomID, "] with options ", JSON.stringify(options));
                         })
                         .error(function(err) {
                             options.error(err);
@@ -41,11 +160,8 @@
             transport: {
                 read: function(options) {
 
-                    $log.info("*** SERVER EXECUTION *** ", JSON.stringify(options));
-
                     var qParams = angular.isFunction(espqParams) ? espqParams() : espqParams;
-                    $log.info("*** SERVER PARAMS *** ", JSON.stringify(qParams));
-
+                    $log.info("FETCHing PQ with PQParams ", JSON.stringify(qParams), " and gridoptions ", JSON.stringify(options));
                     var pqOptions = {};
 
                     if (options.data && options.data.page && options.data.pageSize) {
@@ -54,7 +170,13 @@
                         pqOptions.PageSize = options.data.pageSize
                     }
 
-                    esWebApiService.fetchPublicQuery(qParams.GroupID, qParams.FilterID, pqOptions, qParams.Params)
+                    var executeParams = qParams.Params;
+                    if (executeParams instanceof ESParamValues) {
+                        executeParams = executeParams.getExecuteVals();
+                    }
+
+
+                    esWebApiService.fetchPublicQuery(qParams.GroupID, qParams.FilterID, pqOptions, executeParams)
                         .success(function(pq) {
 
                             if (!angular.isDefined(pq.Rows)) {
@@ -67,7 +189,7 @@
                             }
 
                             options.success(pq);
-                            $log.info("Executed");
+                            $log.info("FETCHed PQ with PQParams ", JSON.stringify(executeParams), " and gridoptions ", JSON.stringify(options));
                         })
                         .error(function(err) {
                             $log.error("Error in DataSource ", err);
@@ -116,7 +238,28 @@
 
                 //ESNumeric
                 if (pt.indexOf("entersoft.framework.platform.esnumeric") == 0) {
-                    return "esAdvancedNumeric";
+                    return "esParamAdvancedNumeric";
+                }
+
+                //ESString
+                if (pt.indexOf("entersoft.framework.platform.esstring, queryprocess") == 0) {
+                    return "esParamAdvancedString";
+                }
+
+                // Numeric (Integer or Decimal)
+                if (pt.indexOf("system.string, mscorlib") == 0) {
+                    switch (pParam.controlType) {
+                        case 1:
+                            {
+                                return "esParamNumeric";
+                            }
+                            break;
+                        case 2:
+                            {
+                                return "esParamNumeric";
+                            }
+                            break;
+                    }
                 }
 
 
@@ -139,10 +282,13 @@
                     } else {
                         return "esParamText";
                     }
-                } else {
-                    return "esParamText";
                 }
+
+                return "esParamText";
+
             };
+
+
             return f;
         })
         .directive('esGrid', ['es.Services.WebApi', 'es.UI.Web.UIHelper', '$log', function(esWebApiService, esWebUIHelper, $log) {
@@ -320,102 +466,90 @@
                 return esCol;
             }
 
-            var esNumericOptions = [{
-                caption: "=",
-                val: "EQ"
-            }, {
-                caption: ">=",
-                val: "GE"
-            }, {
-                caption: ">",
-                val: "GT"
-            }, {
-                caption: "<=",
-                val: "LE"
-            }, {
-                caption: "<",
-                val: "LT"
-            }, {
-                caption: "<>",
-                val: "NE"
-            }];
-
-            function ESParamVal(paramId, paramVal) {
-                this[paramId] = paramVal;
-                //this.paramVal = paramVal;
-            }
-
-            ESParamVal.prototype.getExecuteVal = function() {
-                return this.paramVal;
-            };
-
-
-            function ESNumericParamVal(paramId, paramVal, paramOper) {
-                //call super constructor
-                ESParamVal.call(this, paramId, paramVal);
-                this.paramOper = paramOper;
-            }
-
-            //inherit from ESParamval SuperClass
-            ESNumericParamVal.prototype = Object.create(ESParamVal.prototype);
-
-
-            ESNumericParamVal.prototype.getExecuteVal = function() {
-                /*
-                ESParamVal.prototype.getExecuteVal.apply(this, arguments);
-                console.log('augmenting pattern');
-                */
-                return "ESNumeric(" + this.paramOper + ", '" + this.paramVal + "')";
-            }
-
-
-
-            function ESParamValues(initialArray) {
-                if (!initialArray || !angular.isArray(initialArray) || initialArray.length ==0) {
-                    this.pVals = [];
-                } else {
-                    this.pVals = initialArray;
-                }
-            }
-
-            ESParamValues.prototype.setParamValues = function(vals) {
-                if (!vals || !_.isArray(vals) || vals.length == 0) {
-                    this.pVals = [];
-                    return;
-                }
-                this.pVals = vals;
-            }
-
-            ESParamValues.prototype.getExecuteVals = function() {
-                console.log("pvals = ", JSON.stringify(this.pVals));
-                var v = _.reduce(this.pVals, function(st, p) {
-                    st[p.paramId] = p.getExecuteVal();
-                    return st;
-                }, {});
-                return v;
-            }
+            //here 
 
             function esEval(pInfo, expr) {
-                var EQ = esNumericOptions[0];
-                var GE = {oper: esNumericOptions[1], paramID: pInfo.id};
-                var GT = esNumericOptions[2];
-                var LE = esNumericOptions[3];
-                var LT = esNumericOptions[4];
-                var NE = esNumericOptions[5];
+                var EQ = {
+                    oper: "EQ",
+                    paramID: pInfo.id
+                };
+                var GE = {
+                    oper: "GE",
+                    paramID: pInfo.id
+                };
+                var GT = {
+                    oper: "GT",
+                    paramID: pInfo.id
+                };
+                var LE = {
+                    oper: "LE",
+                    paramID: pInfo.id
+                };
+                var LT = {
+                    oper: "LT",
+                    paramID: pInfo.id
+                };
+                var NE = {
+                    oper: "NE",
+                    paramID: pInfo.id
+                };
+                var RANGE = {
+                    oper: "RANGE",
+                    paramID: pInfo.id
+                };
+                var NULL = {
+                    oper: "NULL",
+                    paramID: pInfo.id
+                };
+                var NOTNULL = {
+                    oper: "NOTNULL",
+                    paramID: pInfo.id
+                };
                 return eval(expr);
             }
 
-            function ESNumeric(oper, val) {
-                return new ESNumericParamVal(oper.paramID, !isNaN(val) ? parseInt(val) : null, oper.oper);
+            function ESNumeric(inArg, val, val2) {
+                var k = {
+                    value: !isNaN(val) ? parseInt(val) : null,
+                    valueTo: !isNaN(val2) ? parseInt(val2) : null,
+                    oper: inArg.oper || "EQ"
+                };
+                return new ESNumericParamVal(inArg.paramID, k);
+            }
+
+            function ESString(inArg, val, val2) {
+                var k = {
+                    value: val,
+                    valueTo: val2,
+                    oper: inArg.oper || "EQ"
+                };
+                return new ESStringParamVal(inArg.paramID, k);
             }
 
             function getEsParamVal(esParamInfo, dx) {
                 var ps = esParamInfo.parameterType.toLowerCase();
+
+                //ESNumeric
                 if (ps.indexOf("entersoft.framework.platform.esnumeric") == 0) {
-                    if (dx.length != 1) {
-                        throw new Error("Invalid number of default values in ESNumeric Param [" + esParamInfo.id + "]");
+                    if (!dx || dx.length == 0) {
+                        return ESNumeric(esParamInfo.id, {oper: "EQ"});
                     }
                     return esEval(esParamInfo, dx[0].Value);
+                }
+
+                //ESString
+                if (ps.indexOf("entersoft.framework.platform.esstring, queryprocess") == 0) {
+                    if (!dx || dx.length == 0) {
+                        return new ESStringParamVal(esParamInfo.id, {oper: "EQ", value: null});
+                    }
+
+                    return esEval(esParamInfo, dx[0].Value);
+                }
+
+                //Not set
+                if (!dx || dx.length == 0)
+                {
+                    return new ESParamVal(esParamInfo.id, null);
                 }
 
                 var processedVals = _.map(dx, function(k) {
@@ -501,22 +635,6 @@
 
                 esParamInfo.enumList = (enmList.length) ? enmList : undefined;
 
-                /*
-                var gxDef = gridexInfo.DefaultValue;
-                if (gxDef && angular.isArray(gxDef)) {
-                    var dx = _.map(_.where(gxDef, {
-                        fParamID: esParamInfo.id
-                    }), function(l) {
-                        return processStrToken(esParamInfo, l.Value);
-                    });
-                    if (dx.length >= 1) {
-                        if (dx.length == 1) {
-                            dx = dx[0];
-                        }
-                        esParamInfo.defaultValues = dx;
-                    }
-                }
-                */
 
                 var gxDef = gridexInfo.DefaultValue;
                 if (gxDef && angular.isArray(gxDef)) {
@@ -524,11 +642,7 @@
                         fParamID: esParamInfo.id
                     });
 
-                    if (dx.length >= 1) {
-                        esParamInfo.defaultValues = getEsParamVal(esParamInfo, dx);
-                    } else {
-                        esParamInfo.defaultValues = new ESParamVal(esParamInfo.id, null);
-                    }
+                    esParamInfo.defaultValues = getEsParamVal(esParamInfo, dx);
                 }
 
                 return esParamInfo;
@@ -625,8 +739,8 @@
                 esGridInfoToKInfo: esGridInfoToKInfo,
                 getZoomDataSource: prepareStdZoom,
                 getPQDataSource: prepareWebScroller,
-                getesNumericOptions: function() {
-                    return esNumericOptions;
+                getesComplexParamFunctionOptions: function() {
+                    return esComplexParamFunctionOptions;
                 },
 
             });

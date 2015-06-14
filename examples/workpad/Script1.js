@@ -1,59 +1,76 @@
-
 /**
  * @class ESParamVal
  * @constructor @paramId @paramVal
  */
 
-var _und = require("underscore");
+var _und = require("/usr/local/lib/node_modules/underscore");
 
 function ESParamVal(paramId, paramVal) {
-    this.paramId = paramId;
     this.paramVal = paramVal;
+    this.paramCode = paramId;
 }
 
-ESParamVal.prototype.getExecuteVal = function () {
+ESParamVal.prototype.getExecuteVal = function() {
     return this.paramVal;
 };
 
 
-function ESNumericParamVal(paramId, paramVal, paramOper)
-{
+function ESNumericParamVal(paramId, paramVal) {
     //call super constructor
     ESParamVal.call(this, paramId, paramVal);
-    this.paramOper = paramOper;
 }
 
 //inherit from ESParamval SuperClass
 ESNumericParamVal.prototype = Object.create(ESParamVal.prototype);
 
 
-ESNumericParamVal.prototype.getExecuteVal = function () {
+ESNumericParamVal.prototype.getExecuteVal = function() {
     /*
     ESParamVal.prototype.getExecuteVal.apply(this, arguments);
     console.log('augmenting pattern');
     */
-    return "ESNumeric(" + this.paramOper + ", '" + this.paramVal + "')";
+    return "ESNumeric(" + this.paramVal.oper.value + ", '" + this.paramVal.value + "')";
 }
 
 
 
-function ESParamValues() {
-    this.pVals = [];
+function ESParamValues(vals) {
+    this.setParamValues(vals);
 }
 
-ESParamValues.prototype.setParamValues = function(vals)
-{
+ESParamValues.prototype.setParamValues = function(vals) {
+
+    var x = this;
+    Object.getOwnPropertyNames(x).forEach(function(element, index, array) {
+        console.log("deleting property ", element);
+        var p = "'" + element + "'";
+        if (delete x[p]) {
+            console.log("DELETED property ", element);
+        }
+    });
+
+
+    
     if (!vals || !_und.isArray(vals) || vals.length == 0) {
-        this.pVals = [];
         return;
     }
-    this.pVals = vals;
+
+    
+    vals.forEach(function(element, index, array) {
+        x[element.paramCode] = element;
+    });
 }
 
-ESParamValues.prototype.getExecuteVals = function () {
-    console.log("pvals = ", JSON.stringify(this.pVals));
-    var v = _und.reduce(this.pVals, function (st, p) {
-        st[p.paramId] = p.getExecuteVal();
+ESParamValues.prototype.getExecuteVals = function() {
+    var x = this;
+    var v = _und.reduce(Object.getOwnPropertyNames(x), function(st, pName) {
+        var p = x[pName];
+
+        if (p.paramVal) {
+        console.log("** ", p);
+
+        st[p.paramCode] = p.getExecuteVal();
+    }
         return st;
     }, {});
     return v;
@@ -62,13 +79,20 @@ ESParamValues.prototype.getExecuteVals = function () {
 //usage
 var p1 = new ESParamVal("p1", 98.97);
 var p2 = new ESParamVal("p2", "Hello");
-var p3 = new ESNumericParamVal("p3", 76.54, 'GE');
+var p3 = new ESNumericParamVal("p3", {
+    value: 87.95,
+    oper: {
+        caption: ">=",
+        value: 'GE'
+    }
+});
 
-console.log(p3.getExecuteVal());
+
+var pall = new ESParamValues([p1, new ESParamVal("cd", null), p2, p3]);
+console.log(pall);
+
+var st = pall.getExecuteVals();
+console.log(st);
 
 
-var pall = new ESParamValues();
-pall.setParamValues([p1, p2, p3]);
-pall.pVals.push(new ESNumericParamVal("p4", 176.54, 'LT'));
 
-console.log(JSON.stringify(pall.getExecuteVals()));

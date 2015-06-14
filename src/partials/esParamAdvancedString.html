@@ -1,0 +1,12 @@
+<div class="es-prm">
+    <label class="es-prm-label">{{esParamDef.caption}}</label>
+    <div class="es-prm-val">
+        <select ng-options="item.value as item.caption for item in esWebUIHelper.getesComplexParamFunctionOptions()" ng-model="esParamVal[esParamDef.id].paramValue.oper">
+        </select>
+        <input ng-model="esParamVal[esParamDef.id].paramValue.value" />
+
+        <input
+            ng-model="esParamVal[esParamDef.id].paramValue.valueTo" 
+            ng-hide="esParamVal[esParamDef.id].paramValue.oper != 'RANGE'" />
+    </div>
+</div>

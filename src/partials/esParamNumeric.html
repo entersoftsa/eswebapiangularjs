@@ -1,11 +1,9 @@
 <div class="es-prm">
     <label class="es-prm-label">{{esParamDef.caption}}</label>
     <div class="es-prm-val">
-        <select ng-options="item.val as item.caption for item in esWebUIHelper.getesNumericOptions()" ng-model="esParamVal[esParamDef.id].esOper">
-        </select>
         <input kendo-numeric-text-box 
         	align="right" 
-        	k-ng-model="esParamVal[esParamDef.id].esVal" 
+        	k-ng-model="esParamVal[esParamDef.id].paramValue" 
         	k-spinners="false" 
         	k-decimals="esParamDef.precision" 
         	k-format="'n'+'{{esParamDef.precision}}'" />
