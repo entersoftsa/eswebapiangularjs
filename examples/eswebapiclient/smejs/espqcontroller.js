@@ -7,10 +7,14 @@ var smeControllers = angular.module('smeControllers', ['kendo.directives', 'unde
 
 
 
-smeControllers.controller('esPQCtrl', ['$scope', '$log', 'es.Services.WebApi', 'es.UI.Web.UIHelper',  '_', 'es.Services.Cache', 'es.Services.Messaging',
-    function($scope, $log, esWebApiService, esWebUIHelper, _, cache, esMessaging) {
+smeControllers.controller('esPQCtrl', ['$scope', '$log', 'es.Services.WebApi', 'es.UI.Web.UIHelper',  '_', 'es.Services.Cache', 'es.Services.Messaging', 'es.Services.Globals',
+    function($scope, $log, esWebApiService, esWebUIHelper, _, cache, esMessaging, esGlobals) {
 
         $scope.currentUser = {};
+        $scope.version = {
+            esAngularVersion: esGlobals.getVersion();
+            esWebAPIVersion: esWebApiService.fetchServerCapabilities()
+        };
 
         $scope.credentials = {
             UserID: 'sme',

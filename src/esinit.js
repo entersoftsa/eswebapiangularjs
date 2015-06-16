@@ -18,8 +18,7 @@
 
         return {
             setMaxSize: function(size) {
-                if (angular.isNumber(size))
-                {
+                if (angular.isNumber(size)) {
                     settings.maxSize = size;
                 }
             },
@@ -58,9 +57,10 @@
                         cache.removeItem(key);
                     },
 
-                    removeWhere: function(f)
-                    {
-                        cache.removeWhere(function(k, v) { return f(k, v); });
+                    removeWhere: function(f) {
+                        cache.removeWhere(function(k, v) {
+                            return f(k, v);
+                        });
                     },
 
                     size: function() {
@@ -273,6 +273,14 @@
             }
 
             return {
+
+                getVersion: function() {
+                    return {
+                        Major: 0,
+                        Minor: 0,
+                        Patch: 140
+                    };
+                },
 
                 getGA: fgetGA,
 

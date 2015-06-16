@@ -10,12 +10,13 @@
         	k-decimals="esParamDef.precision" 
         	k-format="'n'+'{{esParamDef.precision}}'" />
 
-        <input kendo-numeric-text-box 
-            align="right"
-            ng-hide="esParamVal[esParamDef.id].paramValue.oper != 'RANGE'"
-            k-ng-model="esParamVal[esParamDef.id].paramValue.valueTo" 
-            k-spinners="false" 
-            k-decimals="esParamDef.precision" 
-            k-format="'n'+'{{esParamDef.precision}}'" />
+        <span ng-hide="esParamVal[esParamDef.id].paramValue.oper != 'RANGE'">
+            <input kendo-numeric-text-box 
+                align="right"
+                k-ng-model="esParamVal[esParamDef.id].paramValue.valueTo" 
+                k-spinners="false" 
+                k-decimals="esParamDef.precision" 
+                k-format="'n'+'{{esParamDef.precision}}'" />
+        </span>
     </div>
 </div>

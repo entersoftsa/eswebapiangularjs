@@ -13,9 +13,19 @@
 
 <body ng-cloak ng-controller="esPQCtrl">
     <div>
-        <h4>
-            {{pqInfo.caption}} - {{currentUser.Name}}
-        </h4>
+        <h1>
+        {{currentUser.Name}} - PQ {{pqInfo.caption}}
+        </h1>
+        <h3>
+         ESAngular Version is {{version.esAngularVersion}}
+        </h3>
+        <h3>
+         ESWebApi Version is {{version.esWebAPIVersion}}
+        </h3>
+        <div>
+            <kendo-grid k-ng-delay="version.esEBSVersion" k-data-source="version.esEBSVersion.ESProperty" height="400" k-scrollable="true" />
+        </div>
+
         <hr>
         <button es-analytics-on es-analytics-category="hello stavros" type="submit" ng-click="execute()">Execute</button>
     </div>

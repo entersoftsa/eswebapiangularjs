@@ -29,7 +29,11 @@
         __FETCH_COMPANY_PARAM__: "api/rpc/FetchCompanyParam/",
         __FETCH_COMPANY_PARAMS__: "api/rpc/FetchCompanyParams/",
         __SCROLLER_COMMAND__: "api/rpc/ScrollerCommand/",
-        __FORM_COMMAND__: "api/rpc/FormCommand/"
+        __FORM_COMMAND__: "api/rpc/FormCommand/",
+        __FETCH_SESSION_INFO__: "api/rpc/FetchSessionInfo/",
+        __FETCH_ODS_TABLE_INFO__: "api/rpc/FetchOdsTableInfo/",
+        __FETCH_ODS_COLUMN_INFO__: "api/rpc/FetchOdsColumnInfo/",
+        __FETCH_ODS_RELATION_INFO__: "api/rpc/FetchOdsRelationInfo/",
     });
 
     esWebServices.value("__WEBAPI_RT__", {
@@ -147,14 +151,13 @@
                             }
                         }
 
-                        function execScrollerCommand(scrollerCommandParams)
-                        {
+                        function execScrollerCommand(scrollerCommandParams) {
                             if (!scrollerCommandParams || !scrollerCommandParams.ScrollerID || !scrollerCommandParams.CommandID) {
                                 throw "ScrollerID and CommandID properties must be defined";
                             }
                             var surl = ESWEBAPI_URL.__SCROLLER_COMMAND__;
 
-                            var tt = esGlobals.trackTimer("SCR", "COMMAND", scrollerCommandParams.ScrollerID .concat("/", scrollerCommandParams.CommandID));
+                            var tt = esGlobals.trackTimer("SCR", "COMMAND", scrollerCommandParams.ScrollerID.concat("/", scrollerCommandParams.CommandID));
                             tt.startTime();
 
                             var ht = $http({
@@ -172,13 +175,22 @@
                             return ht;
                         }
 
+                        function getOdsInfo(odsType, odsID) {
+                            var defered = $q.defer();
+                            $http.get(unSecureWEBAPI + ESWEBAPI_URL[odsType] + odsID)
+                                .success(function(data) {
+                                    defered.resolve(data);
+                                })
+                            return defered.promise;
+                        }
+
                         function execFormCommand(formCommandParams) {
-                        if (!formCommandParams || !formCommandParams.EntityID || !formCommandParams.CommandID) {
+                            if (!formCommandParams || !formCommandParams.EntityID || !formCommandParams.CommandID) {
                                 throw "EntityID and CommandID properties must be defined";
                             }
                             var surl = ESWEBAPI_URL.__FORM_COMMAND__;
 
-                            var tt = esGlobals.trackTimer("FORM", "COMMAND", formCommandParams.EntityID .concat("/", formCommandParams.CommandID));
+                            var tt = esGlobals.trackTimer("FORM", "COMMAND", formCommandParams.EntityID.concat("/", formCommandParams.CommandID));
                             tt.startTime();
 
                             var ht = $http({
@@ -193,7 +205,7 @@
                             ht.then(function() {
                                 tt.endTime().send();
                             });
-                            return ht;   
+                            return ht;
                         }
 
                         function execScroller(apiUrl, groupID, filterID, params) {
@@ -295,6 +307,22 @@
 
                             registerException: fregisterException,
 
+                            fetchOdsTableInfo: function(tableID) {
+                                return getOdsInfo("__FETCH_ODS_TABLE_INFO__", tableID);
+                            },
+
+                            fetchOdsColumnInfoByTableID: function(tableID, columnID) {
+                                return getOdsInfo("__FETCH_ODS_COLUMN_INFO__", tableID + "/" + columnID);
+                            },
+
+                            fetchOdsColumnInfo: function(columnGID) {
+                                return getOdsInfo("__FETCH_ODS_COLUMN_INFO__", columnGID);
+                            },
+
+                            fetchOdsRelationInfo: function(relationID) {
+                                return getOdsInfo("__FETCH_ODS_RELATION_INFO__", fieldID);
+                            },
+
                             fetchServerCapabilities: function() {
 
                                 var defered = $q.defer();
@@ -333,6 +361,16 @@
                                         SubscriptionPassword: esConfigSettings.subscriptionPassword,
                                         Model: ebsuser
                                     }
+                                });
+                            },
+
+                            fetchSessionInfo: function() {
+                                return $http({
+                                    method: 'get',
+                                    headers: {
+                                        "Authorization": esGlobals.getWebApiToken()
+                                    },
+                                    url: urlWEBAPI + ESWEBAPI_URL.__FETCH_SESSION_INFO__
                                 });
                             },
 
@@ -406,7 +444,6 @@
                                     CommandID: commandID,
                                     CommandParams: commandParams
                                 };
-
                                 if (ds) {
                                     params.EntityDataset = ds;
                                 }
@@ -448,7 +485,7 @@
                                     url: surl
                                 });
 
-                                
+
                                 ht.then(function() {
                                     tt.endTime().send();
                                 });
@@ -471,7 +508,7 @@
                                     url: surl
                                 });
 
-                                
+
                                 ht.then(function() {
                                     tt.endTime().send();
                                 });
@@ -510,7 +547,7 @@
                                 }
 
                                 //if called with 3 arguments then default to a GET request
-                                httpConfig.method =  httpVerb || 'GET';
+                                httpConfig.method = httpVerb || 'GET';
 
                                 //if not a GET request, switch to data instead of params
                                 if (httpConfig.method !== 'GET') {

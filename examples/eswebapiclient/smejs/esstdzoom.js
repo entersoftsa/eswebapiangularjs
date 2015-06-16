@@ -60,20 +60,21 @@ function convertJanusToTelerik(gridexInfo) {
 
 function prepareStdZoom(zoomID, esWebApiService, $log, esOptions) {
     var xParam = {
-        batch: true,
+        //batch: true,
         transport: {
-/*
+
             destroy: function(options) {
                 $log.info("Destroy ", options);
             },
             create: function(options, h4) {
                 $log.info("Create ", options);
+                //options.success(options.data);
             },
             
             parameterMap: function(options, operation) {
                 $log.info("Map ", options, " - ", operation);
             },
-*/
+
             update: function(options) {
                 $log.info("Update ", options);
             },
@@ -107,7 +108,6 @@ function prepareStdZoom(zoomID, esWebApiService, $log, esOptions) {
                         });
 
                         options.success(pq);
-                        this.cancelChanges();
                         $log.info("Executed");
                     })
                     .error(function(err) {
@@ -118,7 +118,7 @@ function prepareStdZoom(zoomID, esWebApiService, $log, esOptions) {
         },
         schema: {
             model: {
-                id: "zoomID",
+                id: "Code",
                 fields: {
                     Code: {
                         editable: false,

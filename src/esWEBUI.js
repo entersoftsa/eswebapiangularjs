@@ -51,13 +51,12 @@
 
 
     ESNumericParamVal.prototype.getExecuteVal = function() {
-        switch (this.paramValue.oper)
-        {
+        switch (this.paramValue.oper) {
             case "RANGE":
                 return "ESNumeric(" + this.paramValue.oper + ", '" + this.paramValue.value + "', '" + this.paramValue.valueTo + "')";
             case "NULL":
             case "NOTNULL":
-                return "ESNumeric(" + this.paramValue.oper + ", '0')";   
+                return "ESNumeric(" + this.paramValue.oper + ", '0')";
             default:
                 return "ESNumeric(" + this.paramValue.oper + ", '" + this.paramValue.value + "')";
         }
@@ -73,19 +72,14 @@
 
 
     ESStringParamVal.prototype.getExecuteVal = function() {
-        switch (this.paramValue.oper)
-        {
+        switch (this.paramValue.oper) {
             case "EQ":
-            {
-                if (!this.paramValue.value) {
-                    return null;
-                }
-            }
+                return this.paramValue.value;
             case "RANGE":
                 return "ESString(" + this.paramValue.oper + ", '" + this.paramValue.value + "', '" + this.paramValue.valueTo + "')";
             case "NULL":
             case "NOTNULL":
-                return "ESString(" + this.paramValue.oper + ", '')";   
+                return "ESString(" + this.paramValue.oper + ", '')";
             default:
                 return "ESString(" + this.paramValue.oper + ", '" + this.paramValue.value + "')";
         }
@@ -97,12 +91,20 @@
     }
 
     ESParamValues.prototype.setParamValues = function(vals) {
+        var x = this;
 
+        //delete any previsously assigned properties
+        for (var prop in x) {
+            if (x.hasOwnProperty(prop)) {
+                delete x[prop];
+            }
+        };
+
+        //asign new properties
         if (!vals || !_.isArray(vals) || vals.length == 0) {
             return;
         }
 
-        var x = this;
         vals.forEach(function(element, index, array) {
             x[element.paramCode] = element;
         });
@@ -110,15 +112,17 @@
 
     ESParamValues.prototype.getExecuteVals = function() {
         var x = this;
-        var v = _.reduce(Object.getOwnPropertyNames(x), function(st, pName) {
-            var p = x[pName];
+        var ret = {};
+        for (var prop in x) {
+            if (x.hasOwnProperty(prop)) {
+                var p = x[prop];
 
-            if (p.paramValue) {
-                st[p.paramCode] = p.getExecuteVal();
+                if (p.paramValue) {
+                    ret[p.paramCode] = p.getExecuteVal();
+                }
             }
-            return st;
-        }, {});
-        return v;
+        }
+        return ret;
     }
 
     function prepareStdZoom($log, zoomID, esWebApiService) {
@@ -532,7 +536,9 @@
                 //ESNumeric
                 if (ps.indexOf("entersoft.framework.platform.esnumeric") == 0) {
                     if (!dx || dx.length == 0) {
-                        return ESNumeric(esParamInfo.id, {oper: "EQ"});
+                        return ESNumeric(esParamInfo.id, {
+                            oper: "EQ"
+                        });
                     }
                     return esEval(esParamInfo, dx[0].Value);
                 }
@@ -540,15 +546,17 @@
                 //ESString
                 if (ps.indexOf("entersoft.framework.platform.esstring, queryprocess") == 0) {
                     if (!dx || dx.length == 0) {
-                        return new ESStringParamVal(esParamInfo.id, {oper: "EQ", value: null});
+                        return new ESStringParamVal(esParamInfo.id, {
+                            oper: "EQ",
+                            value: null
+                        });
                     }
 
                     return esEval(esParamInfo, dx[0].Value);
                 }
 
                 //Not set
-                if (!dx || dx.length == 0)
-                {
+                if (!dx || dx.length == 0) {
                     return new ESParamVal(esParamInfo.id, null);
                 }
 
