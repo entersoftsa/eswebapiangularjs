@@ -3,7 +3,7 @@
  * @constructor @paramId @paramVal
  */
 
-var _und = require("/usr/local/lib/node_modules/underscore");
+var _und = require("underscore");
 
 function ESParamVal(paramId, paramVal) {
     this.paramVal = paramVal;
@@ -41,21 +41,22 @@ function ESParamValues(vals) {
 ESParamValues.prototype.setParamValues = function(vals) {
 
     var x = this;
-    Object.getOwnPropertyNames(x).forEach(function(element, index, array) {
-        console.log("deleting property ", element);
-        var p = "'" + element + "'";
-        if (delete x[p]) {
-            console.log("DELETED property ", element);
+    for (var prop in x) {
+
+        if (x.hasOwnProperty(prop)) {
+            if (delete x[prop]) {
+                console.log("DELETED property ", prop);
+            }
         }
-    });
+    };
 
 
-    
+
     if (!vals || !_und.isArray(vals) || vals.length == 0) {
         return;
     }
 
-    
+
     vals.forEach(function(element, index, array) {
         x[element.paramCode] = element;
     });
@@ -63,14 +64,17 @@ ESParamValues.prototype.setParamValues = function(vals) {
 
 ESParamValues.prototype.getExecuteVals = function() {
     var x = this;
+    var f = x.getOwnPropertyNames();
+    console.log(f.length);
+
     var v = _und.reduce(Object.getOwnPropertyNames(x), function(st, pName) {
         var p = x[pName];
 
         if (p.paramVal) {
-        console.log("** ", p);
+            console.log("** ", p);
 
-        st[p.paramCode] = p.getExecuteVal();
-    }
+            st[p.paramCode] = p.getExecuteVal();
+        }
         return st;
     }, {});
     return v;
@@ -89,10 +93,24 @@ var p3 = new ESNumericParamVal("p3", {
 
 
 var pall = new ESParamValues([p1, new ESParamVal("cd", null), p2, p3]);
+var tbo = new ESParamValues([p3]);
+
+console.log(tbo);
+console.log("--------");
 console.log(pall);
 
+/*
+for (var prop in tbo) {
+    if (tbo.hasOwnProperty(prop)) {
+        if (delete tbo[prop]) {
+            console.log("DELETED property ", prop, " with value ", tbo[prop]);
+        }
+    }
+}
+*/
+
+tbo.setParamValues([p2]);
+console.log("--------");
+console.log(tbo);
 var st = pall.getExecuteVals();
-console.log(st);
-
-
-
+//console.log(st);
