@@ -604,6 +604,7 @@
                     visible: undefined,
                     required: undefined,
                     oDSTag: undefined,
+                    formatStrng: undefined,
                     tags: undefined,
                     visibility: undefined,
                     invSelectedMasterTable: undefined,

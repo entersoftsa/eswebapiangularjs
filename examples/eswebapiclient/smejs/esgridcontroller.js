@@ -10,6 +10,8 @@ var smeControllers = angular.module('smeControllers', ['kendo.directives', 'unde
 smeControllers.controller('esPQCtrl', ['$timeout', '$scope', '$log', 'es.Services.WebApi', 'es.UI.Web.UIHelper', '_', 'es.Services.Cache', 'es.Services.Messaging', 'es.Services.Globals',
     function($timeout, $scope, $log, esWebApiService, esWebUIHelper, _, cache, esMessaging, esGlobals) {
 
+        $scope.getMenu = getMenu;
+
         $scope.currentUser = {};
         $scope.version = {
             esAngularVersion: esGlobals.getVersion(),
@@ -34,6 +36,41 @@ smeControllers.controller('esPQCtrl', ['$timeout', '$scope', '$log', 'es.Service
         //$scope.gridOptions = null;
         $scope.pVals = undefined;
         $scope.pqInfo = {};
+
+        function getMenu() {
+            var mn = {
+                panels: [{
+                    aa: 0,
+                    title: "Retail",
+                    items: [{
+                        aa: 0,
+                        caption: "Report 1",
+                        command: "PQ",
+                        params: {
+                            GroupID: "ESFICustomer",
+                            FilterID: "hka_customerlist",
+                            autoExecute: false
+                        }
+                    }, {
+                        aa: 1,
+                        caption: "Report 2",
+                        command: "PQ",
+                        params: {
+                            GroupID: "ESFICustomer",
+                            FilterID: "hka_customerlist",
+                            autoExecute: true
+                        }
+                    }]
+                }],
+                version: {
+                    Major: 1,
+                    Minor: 0,
+                    Patch: 0
+                },
+                lastModified: new Date()
+            };
+            return mn;
+        }
 
         function onChange(arg) {
             debugger;

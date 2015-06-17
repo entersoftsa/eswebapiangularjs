@@ -22,6 +22,13 @@
         <h3>
          ESWebApi Version is {{version.esWebAPIVersion}}
         </h3>
+       <!--  <div>
+            <ul>
+                <li ng-repeat="x in getMenu()" ng-bind-html-unsafe="x.title">
+                    {{x.title}}
+                </li>
+            </ul>
+        </div> -->
         <div>
             <kendo-grid k-ng-delay="version.esEBSVersion" k-data-source="version.esEBSVersion.ESProperty" height="400" k-scrollable="true" />
         </div>

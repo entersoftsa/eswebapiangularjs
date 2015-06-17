@@ -34,6 +34,8 @@
         __FETCH_ODS_TABLE_INFO__: "api/rpc/FetchOdsTableInfo/",
         __FETCH_ODS_COLUMN_INFO__: "api/rpc/FetchOdsColumnInfo/",
         __FETCH_ODS_RELATION_INFO__: "api/rpc/FetchOdsRelationInfo/",
+        __FETCH_ODS_DETAIL_RELATIONS_INFO__: "api/rpc/FetchOdsDetailRelationsInfo/",
+        __FETCH_ODS_MASTER_RELATIONS_INFO__: "api/rpc/FetchOdsMasterRelationsInfo/",
     });
 
     esWebServices.value("__WEBAPI_RT__", {
@@ -311,16 +313,21 @@
                                 return getOdsInfo("__FETCH_ODS_TABLE_INFO__", tableID);
                             },
 
-                            fetchOdsColumnInfoByTableID: function(tableID, columnID) {
-                                return getOdsInfo("__FETCH_ODS_COLUMN_INFO__", tableID + "/" + columnID);
-                            },
-
-                            fetchOdsColumnInfo: function(columnGID) {
-                                return getOdsInfo("__FETCH_ODS_COLUMN_INFO__", columnGID);
+                            fetchOdsColumnInfo: function(tableID, columnID) {
+                                var odsItem = columnID ? tableID + "/" + columnID : tableID;
+                                return getOdsInfo("__FETCH_ODS_COLUMN_INFO__", odsItem);
                             },
 
                             fetchOdsRelationInfo: function(relationID) {
-                                return getOdsInfo("__FETCH_ODS_RELATION_INFO__", fieldID);
+                                return getOdsInfo("__FETCH_ODS_RELATION_INFO__", relationID);
+                            },
+
+                            fetchOdsMasterRelationsInfo: function(tableID, columnID) {
+                                return getOdsInfo("__FETCH_ODS_MASTER_RELATIONS_INFO__", tableID + "/" +columnID);  
+                            },
+
+                            fetchOdsdDetailRelationsInfo: function(tableID, columnID) {
+                                return getOdsInfo("__FETCH_ODS_DETAIL_RELATIONS_INFO__", tableID + "/" +columnID);  
                             },
 
                             fetchServerCapabilities: function() {
