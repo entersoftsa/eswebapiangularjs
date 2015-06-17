@@ -13,16 +13,13 @@ smeControllers.controller('esPQCtrl', ['$timeout', '$scope', '$log', 'es.Service
         $scope.currentUser = {};
         $scope.version = {
             esAngularVersion: esGlobals.getVersion(),
-           
+
         };
 
         esWebApiService.fetchServerCapabilities().then(function(data) {
             $scope.version.esWebAPIVersion = data.WebApiVersion;
         });
 
-        esWebApiService.fetchSessionInfo().success(function(data) {
-            $scope.version.esEBSVersion = data;
-        });
 
         $scope.gridOptions = null;
         $scope.credentials = {
@@ -60,8 +57,12 @@ smeControllers.controller('esPQCtrl', ['$timeout', '$scope', '$log', 'es.Service
         esMessaging.subscribe("AUTH_CHANGED", function(session, tok) {
             if (session && session.connectionModel) {
                 $scope.currentUser.Name = session.connectionModel.Name;
+                esWebApiService.fetchSessionInfo().success(function(data) {
+                    $scope.version.esEBSVersion = data;
+                });
             } else {
                 $scope.currentUser.Name = 'NOT Approved';
+                $scope.version.esEBSVersion = null;
             }
         });
 

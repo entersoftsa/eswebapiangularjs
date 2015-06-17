@@ -60,25 +60,28 @@ function convertJanusToTelerik(gridexInfo) {
 
 function prepareStdZoom(zoomID, esWebApiService, $log, esOptions) {
     var xParam = {
-        //batch: true,
+        batch: true,
         transport: {
 
             destroy: function(options) {
                 $log.info("Destroy ", options);
+                $log.info(JSON.stringify(options.data));
             },
             create: function(options, h4) {
                 $log.info("Create ", options);
-                //options.success(options.data);
+                $log.info(JSON.stringify(options.data));
             },
-            
+
             parameterMap: function(options, operation) {
                 $log.info("Map ", options, " - ", operation);
+                $log.info(JSON.stringify(options.data));
             },
 
             update: function(options) {
                 $log.info("Update ", options);
+                $log.info(JSON.stringify(options.data));
             },
-            
+
             read: function(options) {
 
                 $log.info("*** SERVER EXECUTION *** ", JSON.stringify(options));
@@ -99,6 +102,8 @@ function prepareStdZoom(zoomID, esWebApiService, $log, esOptions) {
                         }
                         // END tackling
 
+                        
+/*
                         pq.Rows = _.map(pq.Rows, function(f) {
                             return {
                                 Code: f.Code,
@@ -106,6 +111,7 @@ function prepareStdZoom(zoomID, esWebApiService, $log, esOptions) {
                                 AlternativeDescription: f.AlternativeDescription
                             };
                         });
+*/
 
                         options.success(pq);
                         $log.info("Executed");
@@ -119,10 +125,12 @@ function prepareStdZoom(zoomID, esWebApiService, $log, esOptions) {
         schema: {
             model: {
                 id: "Code",
+                /*
                 fields: {
                     Code: {
-                        editable: false,
-                        nullable: true
+                        editable: true,
+                        nullable: false,
+                        required: true
                     },
                     Description: {
                         validation: {
@@ -136,6 +144,7 @@ function prepareStdZoom(zoomID, esWebApiService, $log, esOptions) {
                         }
                     }
                 }
+                */
             },
 
             data: "Rows",
@@ -294,8 +303,15 @@ smeControllers.controller('esStdZoomCtrl', ['$scope', '$log', 'es.Services.WebAp
                 sortable: true,
                 filterable: true,
                 resizable: true,
-                editable: true,
                 toolbar: ["create", "save", "cancel"],
+                /*
+                columns: [{
+                    command: ["edit", "destroy"],
+                    title: "&nbsp;",
+                    width: "250px"
+                }],
+                */
+                editable: true
             };
 
             var kdsoptions = {
