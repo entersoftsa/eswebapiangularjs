@@ -10,7 +10,7 @@ var smeControllers = angular.module('smeControllers', ['kendo.directives', 'unde
 smeControllers.controller('esPQCtrl', ['$timeout', '$scope', '$log', 'es.Services.WebApi', 'es.UI.Web.UIHelper', '_', 'es.Services.Cache', 'es.Services.Messaging', 'es.Services.Globals',
     function($timeout, $scope, $log, esWebApiService, esWebUIHelper, _, cache, esMessaging, esGlobals) {
 
-        $scope.getMenu = getMenu;
+        $scope.cMenu = getMenu();
 
         $scope.currentUser = {};
         $scope.version = {
@@ -105,19 +105,19 @@ smeControllers.controller('esPQCtrl', ['$timeout', '$scope', '$log', 'es.Service
 
         esWebApiService.openSession($scope.credentials)
             .success(function($user, status, headers, config) {
-                console.log("Logged in. Ready to proceed");
-                esWebApiService.fetchPublicQueryInfo($scope.GroupID, $scope.FilterID)
-                    .success(function(ret) {
-                        $timeout(function() {
-                            var v = esWebUIHelper.winGridInfoToESGridInfo($scope.GroupID, $scope.FilterID, ret);
-                            $scope.pVals = v.defaultValues;
-                            //angular.extend($scope.pVals, v.defaultValues);
+                // console.log("Logged in. Ready to proceed");
+                // esWebApiService.fetchPublicQueryInfo($scope.GroupID, $scope.FilterID)
+                //     .success(function(ret) {
+                //         $timeout(function() {
+                //             var v = esWebUIHelper.winGridInfoToESGridInfo($scope.GroupID, $scope.FilterID, ret);
+                //             $scope.pVals = v.defaultValues;
+                //             //angular.extend($scope.pVals, v.defaultValues);
 
-                            $scope.gridOptions = esWebUIHelper.esGridInfoToKInfo(esWebApiService, $scope.GroupID, $scope.FilterID, $scope.pVals, v);
-                            $scope.pqInfo = v;
-                        }, 300);
+                //             $scope.gridOptions = esWebUIHelper.esGridInfoToKInfo(esWebApiService, $scope.GroupID, $scope.FilterID, $scope.pVals, v);
+                //             $scope.pqInfo = v;
+                //         }, 300);
 
-                    });
+                //     });
             })
             .error(function(rejection) {
                 var msg = rejection ? rejection.UserMessage : "Generic server error";

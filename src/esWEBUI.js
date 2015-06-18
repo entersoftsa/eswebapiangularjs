@@ -326,7 +326,7 @@
                 }
             };
         }])
-        .directive('esParam', ['es.Services.WebApi', 'es.UI.Web.UIHelper', '$log', function(esWebApiService, esWebUIHelper, $log) {
+        .directive('esParam', ['$log', 'es.Services.WebApi', 'es.UI.Web.UIHelper', function($log, esWebApiService, esWebUIHelper) {
             return {
                 restrict: 'AE',
                 scope: {
@@ -350,21 +350,64 @@
                 }
             };
         }])
-        .directive('esParamsPanel', ['$log', function($log) {
+        .directive('esWebPq', ['$log', 'es.Services.WebApi', 'es.UI.Web.UIHelper', function($log, esWebApiService, esWebUIHelper) {
+            return {
+                restrict: 'AE',
+                scope: {
+                    esGroupId: "=",
+                    esFilterId: "=",
+                },
+                templateUrl: function(element, attrs) {
+                    $log.info("Parameter element = ", element, " Parameter attrs = ", attrs);
+                    return "../../src/partials/esWebPQ.html";
+                },
+                link: function(scope, iElement, iAttrs) {
+                    if (!scope.esGroupId || !scope.esFilterId) {
+                        throw "You must set the pair es-group-id and es-filter-id attrs";
+                    }
+
+                    esWebApiService.fetchPublicQueryInfo(scope.esGroupId, scope.esFilterId)
+                        .success(function(ret) {
+                            var v = esWebUIHelper.winGridInfoToESGridInfo(scope.esGroupId, scope.esFilterId, ret);
+                            scope.esParamsValues = v.defaultValues;
+                            scope.esParamsDef = v.params;
+                            scope.esGridOptions = esWebUIHelper.esGridInfoToKInfo(esWebApiService, scope.esGroupId, scope.esFilterId, scope.esParamsValues, v);
+                        });
+                }
+            };
+        }])
+        .directive('esParamsPanel', ['$log', 'es.Services.WebApi', 'es.UI.Web.UIHelper', function($log, esWebApiService, esWebUIHelper) {
             return {
                 restrict: 'AE',
                 scope: {
                     esParamsDef: '=',
-                    esParamsValues: '='
+                    esPqInfo: '=',
+                    esParamsValues: '=',
+                    esGroupId: "=",
+                    esFilterId: "=",
                 },
                 templateUrl: function(element, attrs) {
                     $log.info("Parameter element = ", element, " Parameter attrs = ", attrs);
                     return "../../src/partials/esParams.html";
                 },
                 link: function(scope, iElement, iAttrs) {
-                    if (!scope.esParamsDef) {
-                        //throw "You must set a definitions parameters";
-                        return;
+                    if (!iAttrs.esParamsDef && !iAttrs.esPqInfo && (!scope.esGroupId || !scope.esFilterId)) {
+                        throw "You must set either the es-params-def or ea-pq-info or the pair es-group-id and es-filter-id attrs";
+                    }
+
+                    if (!iAttrs.esParamsDef) {
+                        if (!iAttrs.esPqInfo) {
+                            // we are given groupid and filterid =>
+                            // we must retrieve pqinfo on owr own
+                            esWebApiService.fetchPublicQueryInfo(scope.esGroupId, scope.esFilterId)
+                                .success(function(ret) {
+                                    var v = esWebUIHelper.winGridInfoToESGridInfo(scope.esGroupId, scope.esFilterId, ret);
+                                    scope.esParamsValues = v.defaultValues;
+                                    scope.esParamsDef = v.params;
+                                });
+                        } else {
+                            scope.esParamDef = esPqInfo.params;
+                        }
                     }
                 }
             };
@@ -391,7 +434,9 @@
 
             function esGridInfoToKInfo(esWebApiService, esGroupId, esFilterId, executeParams, esGridInfo) {
                 var grdopt = {
-                    pageable: true,
+                    pageable: {
+                        refresh: true
+                    },
                     sortable: true,
                     filterable: true,
                     resizable: true,
